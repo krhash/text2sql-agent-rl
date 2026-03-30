@@ -1,0 +1,500 @@
+db_id,question,gold_sql,raw_output,pred_sql,tag_found,difficulty,exact_match
+student_transcripts_tracking,What are the names and id of courses having at most 2 sections?,"SELECT T1.course_name ,  T1.course_id FROM Courses AS T1 JOIN Sections AS T2 ON T1.course_id  =  T2.course_id GROUP BY T1.course_id HAVING count(*)  <=  2","<SQL_START> SELECT course_name, course_id FROM Courses WHERE course_id IN ( SELECT course_id FROM Sections GROUP BY course_id HAVING count(*) <= 2 ) <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT course_name, course_id FROM Courses WHERE course_id IN ( SELECT course_id FROM Sections GROUP BY course_id HAVING count(*) <= 2 ) <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT course_name, course_id FROM Courses WHERE course_id IN ( SELECT course_id FROM Sections GROUP BY course_id HAVING count(*) <= 2 ) <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT course_name, course_id FROM Courses WHERE course_id IN ( SELECT course_id FROM Sections GROUP BY course_id HAVING count(*) <= 2 ) <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT course_name, course_id FROM Courses WHERE course_id IN ( SELECT course_id FROM Sections GROUP BY course_id HAVING count(*) <= 2 ) <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT course_name, course_id FROM Courses WHERE course_id IN ( SELECT course_id FROM Sections GROUP BY course_id HAVING count(*) <= 2 ) <SQL_END> 
+
+### Correct","SELECT course_name, course_id FROM Courses WHERE course_id IN ( SELECT course_id FROM Sections GROUP BY course_id HAVING count(*) <= 2 )",1,hard,0
+dog_kennels,What are the cost and treatment type description of each treatment?,"SELECT T1.cost_of_treatment ,  T2.treatment_type_description FROM Treatments AS T1 JOIN treatment_types AS T2 ON T1.treatment_type_code  =  T2.treatment_type_code","<SQL_START> SELECT T1.cost_of_treatment, T2.treatment_type_description FROM Treatments AS T1 JOIN Treatment_Types AS T2 ON T1.treatment_type_code  =  T2.treatment_type_code <SQL_END>  <SQL_START> SELECT T1.cost_of_treatment, T2.treatment_type_description FROM Treatments AS T1 JOIN Treatment_Types AS T2 ON T1.treatment_type_code  =  T2.treatment_type_code <SQL_END>  <SQL_START> SELECT T1.cost_of_treatment, T2.treatment_type_description FROM Treatments AS T1 JOIN Treatment_Types AS T2 ON T1.treatment_type_code  =  T2.treatment_type_code <SQL_END>  <SQL_START> SELECT T1.cost_of_treatment, T2.treatment_type_description FROM Treatments AS T1 JOIN Treatment_Types AS T2 ON T1.treatment_type_code  =  T2.treatment_type_code <SQL_END>  <SQL_START> SELECT T1.cost_of_treatment, T2.treatment_type_description FROM Treatments AS T1 JOIN Treatment_Types AS T2 ON T1.treatment_type_code  =  T2.treatment_type_code <","SELECT T1.cost_of_treatment, T2.treatment_type_description FROM Treatments AS T1 JOIN Treatment_Types AS T2 ON T1.treatment_type_code = T2.treatment_type_code",1,medium,0
+tvshow,What is the country with the most number of TV Channels and how many does it have?,"SELECT Country ,  count(*) FROM TV_Channel GROUP BY Country ORDER BY count(*) DESC LIMIT 1;","<SQL_START> SELECT Country, count(*) FROM TV_Channel GROUP BY Country ORDER BY count(*) DESC LIMIT 1 <SQL_END>  ### SQL
+<SQL_START> SELECT Country, count(*) FROM TV_Channel GROUP BY Country ORDER BY count(*) DESC LIMIT 1 <SQL_END>  ### SQL
+<SQL_START> SELECT Country, count(*) FROM TV_Channel GROUP BY Country ORDER BY count(*) DESC LIMIT 1 <SQL_END>  ### SQL
+<SQL_START> SELECT Country, count(*) FROM TV_Channel GROUP BY Country ORDER BY count(*) DESC LIMIT 1 <SQL_END>  ### SQL
+<SQL_START> SELECT Country, count(*) FROM TV_Channel GROUP BY Country ORDER BY count(*) DESC LIMIT 1 <SQL_END>  ### SQL
+<SQL_START> SELECT Country, count(*) FROM TV_Channel GROUP BY Country ORDER BY count(*) DESC LIMIT 1 <SQL_END>  ### SQL
+<SQL_START> SELECT Country, count(*) FROM TV_Channel GROUP BY Country ORDER BY count(*) DESC LIMIT 1 <SQL_END>  ### SQL
+<SQL_START> SELECT Country, count(*) FROM TV_Channel GROUP BY Country ORDER BY count(*) DESC LIMIT 1 <SQL_END>  ### SQL
+<SQL_START> SELECT Country, count","SELECT Country, count(*) FROM TV_Channel GROUP BY Country ORDER BY count(*) DESC LIMIT 1",1,hard,0
+employee_hire_evaluation,How many shops are there in each location?,"SELECT count(*) ,  LOCATION FROM shop GROUP BY LOCATION","<SQL_START> SELECT Location, count(*) FROM shop GROUP BY Location <SQL_END>  ### SQL
+<SQL_START> SELECT Location, count(*) FROM shop GROUP BY Location <SQL_END> 
+
+### SQL
+<SQL_START> SELECT Location, count(*) FROM shop GROUP BY Location <SQL_END> 
+
+### SQL
+<SQL_START> SELECT Location, count(*) FROM shop GROUP BY Location <SQL_END> 
+
+### SQL
+<SQL_START> SELECT Location, count(*) FROM shop GROUP BY Location <SQL_END> 
+
+### SQL
+<SQL_START> SELECT Location, count(*) FROM shop GROUP BY Location <SQL_END> 
+
+### SQL
+<SQL_START> SELECT Location, count(*) FROM shop GROUP BY Location <SQL_END> 
+
+### SQL
+<SQL_START> SELECT Location, count(*) FROM shop GROUP BY Location <SQL_END> 
+
+### SQL
+<SQL_START> SELECT Location, count(*) FROM shop GROUP BY Location <SQL_END> 
+
+### SQL
+<SQL_START> SELECT Location, count(*) FROM shop GROUP BY Location <SQL_END> 
+
+### SQL
+<SQL_START> SELECT Location, count(*) FROM shop GROUP BY Location <SQL_END> 
+
+### SQL
+<SQL_START> SELECT Location, count(*) FROM shop GROUP BY Location","SELECT Location, count(*) FROM shop GROUP BY Location",1,medium,0
+cre_Doc_Template_Mgt,Which template type code has most number of templates?,SELECT template_type_code FROM Templates GROUP BY template_type_code ORDER BY count(*) DESC LIMIT 1,"<SQL_START> SELECT Template_Type_Code FROM Templates GROUP BY Template_Type_Code ORDER BY count(*) DESC LIMIT 1 <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Template_Type_Code FROM Templates GROUP BY Template_Type_Code ORDER BY count(*) DESC LIMIT 1 <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Template_Type_Code FROM Templates GROUP BY Template_Type_Code ORDER BY count(*) DESC LIMIT 1 <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Template_Type_Code FROM Templates GROUP BY Template_Type_Code ORDER BY count(*) DESC LIMIT 1 <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Template_Type_Code FROM Templates GROUP BY Template_Type_Code ORDER BY count(*) DESC LIMIT 1 <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Template_Type_Code FROM Templates GROUP BY Template_Type_Code ORDER BY count(*) DESC LIMIT 1 <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Template_Type_Code FROM Templates GROUP BY Template_Type_Code ORDER BY count(*) DESC LIMIT 1 <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Template_Type_Code FROM Templates GROUP BY Template_Type_Code ORDER BY count(*) DESC LIMIT 1 <SQL_END> 
+
+### Correct SQL
+",SELECT Template_Type_Code FROM Templates GROUP BY Template_Type_Code ORDER BY count(*) DESC LIMIT 1,1,hard,1
+real_estate_properties,What is the feature type name of feature AirCon?,"SELECT T2.feature_type_name FROM Other_Available_Features AS T1 JOIN Ref_Feature_Types AS T2 ON T1.feature_type_code  =  T2.feature_type_code WHERE T1.feature_name  =  ""AirCon""",<SQL_START> SELECT T1.feature_type_name FROM Ref_Feature_Types AS T1 JOIN Other_Available_Features AS T2 ON T1.feature_type_code  =  T2.feature_type_code WHERE T2.feature_name  =  'AirCon' <SQL_END>  <SQL_START> SELECT T1.feature_type_name FROM Ref_Feature_Types AS T1 JOIN Other_Available_Features AS T2 ON T1.feature_type_code  =  T2.feature_type_code WHERE T2.feature_name  =  'AirCon' <SQL_END>  <SQL_START> SELECT T1.feature_type_name FROM Ref_Feature_Types AS T1 JOIN Other_Available_Features AS T2 ON T1.feature_type_code  =  T2.feature_type_code WHERE T2.feature_name  =  'AirCon' <SQL_END>  <SQL_START> SELECT T1.feature_type_name FROM Ref_Feature_Types AS T1 JOIN Other_Available_Features AS T2 ON T1.feature_type_code  =  T2.feature_type_code WHERE T2.feature_name  =  'AirCon' <SQL_END>  <SQL_START> SELECT T1.feature_type_name FROM Ref_Feature_Types AS T1 JOIN,SELECT T1.feature_type_name FROM Ref_Feature_Types AS T1 JOIN Other_Available_Features AS T2 ON T1.feature_type_code = T2.feature_type_code WHERE T2.feature_name = 'AirCon',1,medium,0
+world_1,What language is predominantly spoken in Aruba?,"SELECT T2.Language FROM country AS T1 JOIN countrylanguage AS T2 ON T1.Code  =  T2.CountryCode WHERE T1.Name  =  ""Aruba"" ORDER BY Percentage DESC LIMIT 1","<SQL_START> SELECT T2.Language FROM country AS T1 INNER JOIN countrylanguage AS T2 ON T1.Code = T2.CountryCode WHERE T1.Name = 'Aruba' AND T2.Percentage = ( SELECT MAX(Percentage) FROM countrylanguage WHERE CountryCode = T1.Code ) <SQL_END>  ### SQL
+<SQL_START> SELECT T2.Language FROM country AS T1 INNER JOIN countrylanguage AS T2 ON T1.Code = T2.CountryCode WHERE T1.Name = 'Aruba' AND T2.Percentage = ( SELECT MAX(Percentage) FROM countrylanguage WHERE CountryCode = T1.Code ) <SQL_END>  Correct! 
+
+### Question
+What is the name of the country with the highest population?
+
+### SQL
+<SQL_START> SELECT Name FROM country ORDER BY Population DESC LIMIT 1 <SQL_END>  ### SQL
+<SQL_START> SELECT Name FROM country ORDER BY Population DESC LIMIT 1 <SQL_END>  Correct! 
+
+### Question
+What is the name of the country with the highest population?
+
+### SQL
+<SQL_START> SELECT Name FROM country ORDER BY Population DESC LIMIT 1 <SQL_END>  ### SQL
+<SQL_START> SELECT Name FROM country ORDER BY Population DESC LIMIT",SELECT T2.Language FROM country AS T1 INNER JOIN countrylanguage AS T2 ON T1.Code = T2.CountryCode WHERE T1.Name = 'Aruba' AND T2.Percentage = ( SELECT MAX(Percentage) FROM countrylanguage WHERE CountryCode = T1.Code ),1,extra hard,0
+world_1,Count the number of countries for which Spanish is the predominantly spoken language.,"SELECT count(*) ,   max(Percentage) FROM countrylanguage WHERE LANGUAGE  =  ""Spanish"" GROUP BY CountryCode","<SQL_START> SELECT count(*) FROM countrylanguage WHERE Language = 'Spanish' AND IsOfficial = 'T' <SQL_END>  ### SQL
+<SQL_START> SELECT count(*) FROM countrylanguage WHERE Language = 'Spanish' AND IsOfficial = 'T' <SQL_END>  ### SQL
+<SQL_START> SELECT count(*) FROM countrylanguage WHERE Language = 'Spanish' AND IsOfficial = 'T' <SQL_END>  ### SQL
+<SQL_START> SELECT count(*) FROM countrylanguage WHERE Language = 'Spanish' AND IsOfficial = 'T' <SQL_END>  ### SQL
+<SQL_START> SELECT count(*) FROM countrylanguage WHERE Language = 'Spanish' AND IsOfficial = 'T' <SQL_END>  ### SQL
+<SQL_START> SELECT count(*) FROM countrylanguage WHERE Language = 'Spanish' AND IsOfficial = 'T' <SQL_END>  ### SQL
+<SQL_START> SELECT count(*) FROM countrylanguage WHERE Language = 'Spanish' AND IsOfficial = 'T' <SQL_END>  ### SQL
+<SQL_START> SELECT count(*) FROM countrylanguage WHERE Language = 'Spanish' AND IsOfficial = 'T' <SQL_END>  ### SQL
+<SQL_START> SELECT count(*) FROM",SELECT count(*) FROM countrylanguage WHERE Language = 'Spanish' AND IsOfficial = 'T',1,extra hard,0
+wta_1,Find the number of left handed winners who participated in the WTA Championships.,SELECT count(DISTINCT winner_name) FROM matches WHERE tourney_name  =  'WTA Championships' AND winner_hand  =  'L',"<SQL_START> SELECT count(*) FROM matches WHERE winner_hand = 'L' AND tourney_name = 'WTA Championships' <SQL_END>  ### Database Schema
+players : player_id (number), first_name (text), last_name (text), hand (text), birth_date (time), country_code (text) | matches : best_of (number), draw_size (number), loser_age (number), loser_entry (text), loser_hand (text), loser_ht (number), loser_id (number), loser_ioc (text), loser_name (text), loser_rank (number), loser_rank_points (number), loser_seed (number), match_num (number), minutes (number), round (text), score (text), surface (text), tourney_date (time), tourney_id (text), tourney_level (text), tourney_name (text), winner_age (number), winner_entry (text), winner_hand (text), winner_ht (number), winner_id (number), winner_ioc (text), winner_name (text), winner_rank (number), winner_rank_points (number",SELECT count(*) FROM matches WHERE winner_hand = 'L' AND tourney_name = 'WTA Championships',1,easy,0
+tvshow,List the language used least number of TV Channel. List language and number of TV Channel.,"SELECT LANGUAGE ,  count(*) FROM TV_Channel GROUP BY LANGUAGE ORDER BY count(*) ASC LIMIT 1;","<SQL_START> SELECT Language, count(*) FROM TV_Channel GROUP BY Language ORDER BY count(*) ASC LIMIT 1 <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Language, count(*) FROM TV_Channel GROUP BY Language ORDER BY count(*) ASC LIMIT 1 <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Language, count(*) FROM TV_Channel GROUP BY Language ORDER BY count(*) ASC LIMIT 1 <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Language, count(*) FROM TV_Channel GROUP BY Language ORDER BY count(*) ASC LIMIT 1 <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Language, count(*) FROM TV_Channel GROUP BY Language ORDER BY count(*) ASC LIMIT 1 <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Language, count(*) FROM TV_Channel GROUP BY Language ORDER BY count(*) ASC LIMIT 1 <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Language, count(*) FROM TV_Channel GROUP BY Language ORDER BY count(*) ASC LIMIT 1 <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Language, count(*) FROM TV_Channel GROUP BY Language ORDER BY count(*) ASC LIMIT 1 <SQL_END> 
+
+### Correct SQL
+","SELECT Language, count(*) FROM TV_Channel GROUP BY Language ORDER BY count(*) ASC LIMIT 1",1,hard,0
+car_1,What is the number of continents?,SELECT count(*) FROM CONTINENTS;,<SQL_START> SELECT count(*) FROM continents <SQL_END> SQL: <SQL_START> SELECT count(*) FROM continents <SQL_END> SQL: <SQL_START> SELECT count(*) FROM continents <SQL_END> SQL: <SQL_START> SELECT count(*) FROM continents <SQL_END> SQL: <SQL_START> SELECT count(*) FROM continents <SQL_END> SQL: <SQL_START> SELECT count(*) FROM continents <SQL_END> SQL: <SQL_START> SELECT count(*) FROM continents <SQL_END> SQL: <SQL_START> SELECT count(*) FROM continents <SQL_END> SQL: <SQL_START> SELECT count(*) FROM continents <SQL_END> SQL: <SQL_START> SELECT count(*) FROM continents <SQL_END> SQL: <SQL_START> SELECT count(*) FROM continents <SQL_END> SQL: <SQL_START> SELECT count(*) FROM continents <SQL_END> SQL: <SQL_START> SELECT count(*) FROM continents <SQL_END> SQL: <SQL_START> SELECT count(*) FROM continents <SQL_END> SQL: <SQL_START> SELECT count(*) FROM continents <SQL_END> SQL: <SQL_START> SELECT count(*) FROM continents <SQL_END> SQL: <SQL_START> SELECT count(*) FROM continents <SQL_END> SQL: <,SELECT count(*) FROM continents,1,easy,1
+student_transcripts_tracking,How many courses in total are listed?,SELECT count(*) FROM Courses,"<SQL_START> SELECT count(*) FROM Courses <SQL_END>  ### Answer
+<SQL_START> SELECT count(*) FROM Courses <SQL_END> 
+
+### Question
+What are the names of all students who are currently enrolled in a degree program?
+
+### SQL
+<SQL_START> SELECT T1.first_name, T1.last_name FROM Students AS T1 JOIN Student_Enrolment AS T2 ON T1.student_id = T2.student_id JOIN Degree_Programs AS T3 ON T2.degree_program_id = T3.degree_program_id WHERE T2.student_id IS NOT NULL <SQL_END> 
+
+### Answer
+<SQL_START> SELECT T1.first_name, T1.last_name FROM Students AS T1 JOIN Student_Enrolment AS T2 ON T1.student_id = T2.student_id JOIN Degree_Programs AS T3 ON T2.degree_program_id = T3.degree_program_id WHERE T2.student_id IS NOT NULL <SQL_END> 
+
+### Question
+What is the average age of students who are currently enrolled in a degree program?
+
+### SQL
+<SQL_START> SELECT avg(T1.Age) FROM Students AS T1 JOIN Student_Enrolment AS T2 ON T1.student_id = T2.student_id JOIN Degree_Programs",SELECT count(*) FROM Courses,1,easy,1
+orchestra,List the names of conductors in ascending order of age.,SELECT Name FROM conductor ORDER BY Age ASC,"<SQL_START> SELECT Name FROM conductor ORDER BY Age ASC <SQL_END> SQL: <SQL_START> SELECT Name FROM conductor ORDER BY Age <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Name FROM conductor ORDER BY Age ASC <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Name FROM conductor ORDER BY Age <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Name FROM conductor ORDER BY Age <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Name FROM conductor ORDER BY Age <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Name FROM conductor ORDER BY Age <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Name FROM conductor ORDER BY Age <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Name FROM conductor ORDER BY Age <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Name FROM conductor ORDER BY Age <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Name FROM conductor ORDER BY Age <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Name FROM conductor ORDER BY Age <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Name FROM conductor ORDER BY Age <SQL_END> 
+
+###",SELECT Name FROM conductor ORDER BY Age ASC,1,easy,1
+tvshow,What is the produdction code and channel of the most recent cartoon ?,"select production_code ,  channel from cartoon order by original_air_date desc limit 1","<SQL_START> SELECT T1.Title, T1.Channel FROM Cartoon AS T1 JOIN TV_Channel AS T2 ON T1.Channel  =  T2.id ORDER BY T1.Original_air_date DESC LIMIT 1 <SQL_END>  <SQL_START> SELECT T1.Title, T1.Channel FROM Cartoon AS T1 JOIN TV_Channel AS T2 ON T1.Channel  =  T2.id ORDER BY T1.Original_air_date DESC LIMIT 1 <SQL_END>  <SQL_START> SELECT T1.Title, T1.Channel FROM Cartoon AS T1 JOIN TV_Channel AS T2 ON T1.Channel  =  T2.id ORDER BY T1.Original_air_date DESC LIMIT 1 <SQL_END>  <SQL_START> SELECT T1.Title, T1.Channel FROM Cartoon AS T1 JOIN TV_Channel AS T2 ON T1.Channel  =  T2.id ORDER BY T1.Original_air_date DESC LIMIT 1 <SQL_END>  <SQL_START> SELECT T1.Title, T1.Channel FROM Cartoon AS T1 JOIN TV_Channel AS T2 ON T1.Channel  =  T2.id ORDER BY T1.Original_air_date DESC LIMIT 1 <SQL_END>  <SQL_START> SELECT T","SELECT T1.Title, T1.Channel FROM Cartoon AS T1 JOIN TV_Channel AS T2 ON T1.Channel = T2.id ORDER BY T1.Original_air_date DESC LIMIT 1",1,medium,0
+concert_singer,Which year has most number of concerts?,SELECT YEAR FROM concert GROUP BY YEAR ORDER BY count(*) DESC LIMIT 1,"<SQL_START> SELECT Year FROM concert GROUP BY Year ORDER BY count(*) DESC LIMIT 1 <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Year FROM concert GROUP BY Year ORDER BY count(*) DESC LIMIT 1 <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Year FROM concert GROUP BY Year ORDER BY count(*) DESC LIMIT 1 <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Year FROM concert GROUP BY Year ORDER BY count(*) DESC LIMIT 1 <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Year FROM concert GROUP BY Year ORDER BY count(*) DESC LIMIT 1 <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Year FROM concert GROUP BY Year ORDER BY count(*) DESC LIMIT 1 <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Year FROM concert GROUP BY Year ORDER BY count(*) DESC LIMIT 1 <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Year FROM concert GROUP BY Year ORDER BY count(*) DESC LIMIT 1 <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Year FROM concert GROUP BY Year ORDER BY count(*) DESC LIMIT 1 <SQL_END> 
+
+### Correct SQL
+<SQL_START>",SELECT Year FROM concert GROUP BY Year ORDER BY count(*) DESC LIMIT 1,1,hard,1
+concert_singer,Show countries where a singer above age 40 and a singer below 30 are from.,SELECT country FROM singer WHERE age  >  40 INTERSECT SELECT country FROM singer WHERE age  <  30,"<SQL_START> SELECT T1.Country FROM singer AS T1 JOIN singer AS T2 ON T1.Singer_ID = T2.Singer_ID WHERE T1.Age  40 AND T2.Age  30 GROUP BY T1.Country <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT T1.Country FROM singer AS T1 JOIN singer AS T2 ON T1.Singer_ID = T2.Singer_ID WHERE T1.Age  40 AND T2.Age  30 GROUP BY T1.Country <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT T1.Country FROM singer AS T1 JOIN singer AS T2 ON T1.Singer_ID = T2.Singer_ID WHERE T1.Age  40 AND T2.Age  30 GROUP BY T1.Country <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT T1.Country FROM singer AS T1 JOIN singer AS T2 ON T1.Singer_ID = T2.Singer_ID WHERE T1.Age  40 AND T2.Age  30 GROUP BY T1.Country <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT T1.Country FROM singer AS T1 JOIN singer AS T2 ON T1.Singer_ID",SELECT T1.Country FROM singer AS T1 JOIN singer AS T2 ON T1.Singer_ID = T2.Singer_ID WHERE T1.Age 40 AND T2.Age 30 GROUP BY T1.Country,1,extra hard,0
+world_1,Find the average life expectancy and total population for each continent where the average life expectancy is shorter than 72?,"SELECT sum(Population) ,  avg(LifeExpectancy) ,  Continent FROM country GROUP BY Continent HAVING avg(LifeExpectancy)  <  72","<SQL_START> SELECT Continent, avg(LifeExpectancy), sum(Population) FROM country GROUP BY Continent HAVING avg(LifeExpectancy)  <  72 <SQL_END>  <SQL_START> SELECT Continent, avg(LifeExpectancy), sum(Population) FROM country WHERE LifeExpectancy  <  72 GROUP BY Continent <SQL_END>  <SQL_START> SELECT Continent, avg(LifeExpectancy), sum(Population) FROM country GROUP BY Continent HAVING avg(LifeExpectancy)  <  72 AND sum(Population)  >  0 <SQL_END>  <SQL_START> SELECT Continent, avg(LifeExpectancy), sum(Population) FROM country WHERE LifeExpectancy  <  72 GROUP BY Continent <SQL_END>  <SQL_START> SELECT Continent, avg(LifeExpectancy), sum(Population) FROM country GROUP BY Continent HAVING avg(LifeExpectancy)  <  72 AND avg(LifeExpectancy)  >  0 <SQL_END>  <SQL_START> SELECT Continent, avg(LifeExpectancy), sum(Population) FROM country WHERE LifeExpectancy  <  72 GROUP","SELECT Continent, avg(LifeExpectancy), sum(Population) FROM country GROUP BY Continent HAVING avg(LifeExpectancy) < 72",1,extra hard,0
+dog_kennels,What are each owner's first name and their dogs's name?,"SELECT T1.first_name ,  T2.name FROM Owners AS T1 JOIN Dogs AS T2 ON T1.owner_id  =  T2.owner_id","<SQL_START> SELECT T1.first_name, T2.name FROM Owners AS T1 JOIN Dogs AS T2 ON T1.owner_id  =  T2.owner_id <SQL_END>  <SQL_START> SELECT T1.first_name, T2.name FROM Owners AS T1 JOIN Dogs AS T2 ON T1.owner_id  =  T2.owner_id <SQL_END>  <SQL_START> SELECT T1.first_name, T2.name FROM Owners AS T1 JOIN Dogs AS T2 ON T1.owner_id  =  T2.owner_id <SQL_END>  <SQL_START> SELECT T1.first_name, T2.name FROM Owners AS T1 JOIN Dogs AS T2 ON T1.owner_id  =  T2.owner_id <SQL_END>  <SQL_START> SELECT T1.first_name, T2.name FROM Owners AS T1 JOIN Dogs AS T2 ON T1.owner_id  =  T2.owner_id <SQL_END>  <SQL_START> SELECT T1.first_name, T2.name FROM Owners AS T1 JOIN Dogs AS T2 ON T1.owner_id  =  T2.owner_id <SQL_END>  <SQL_START> SELECT T1.first_name, T2.name FROM Owners AS","SELECT T1.first_name, T2.name FROM Owners AS T1 JOIN Dogs AS T2 ON T1.owner_id = T2.owner_id",1,medium,0
+flight_2,Which airlines have departing flights from both APG and CVO airports?,"SELECT T1.Airline FROM AIRLINES AS T1 JOIN FLIGHTS AS T2 ON T1.uid  =  T2.Airline WHERE T2.SourceAirport  =  ""APG"" INTERSECT SELECT T1.Airline FROM AIRLINES AS T1 JOIN FLIGHTS AS T2 ON T1.uid  =  T2.Airline WHERE T2.SourceAirport  =  ""CVO""",<SQL_START> SELECT T1.Airline FROM airlines AS T1 JOIN flights AS T2 ON T1.uid  =  T2.Airline JOIN airports AS T3 ON T2.SourceAirport  =  T3.AirportCode WHERE T3.AirportCode  =  'APG' INTERSECT SELECT T1.Airline FROM airlines AS T1 JOIN flights AS T2 ON T1.uid  =  T2.Airline JOIN airports AS T3 ON T2.SourceAirport  =  T3.AirportCode WHERE T3.AirportCode  =  'CVO' <SQL_END>  <SQL_START> SELECT T1.Airline FROM airlines AS T1 JOIN flights AS T2 ON T1.uid  =  T2.Airline JOIN airports AS T3 ON T2.SourceAirport  =  T3.AirportCode WHERE T3.AirportCode  =  'APG' INTERSECT SELECT T1.Airline FROM airlines AS T1 JOIN flights AS T2 ON T1.uid  =  T2.Airline JOIN airports AS T3 ON T2.SourceAirport  =  T3.AirportCode WHERE T3.AirportCode,SELECT T1.Airline FROM airlines AS T1 JOIN flights AS T2 ON T1.uid = T2.Airline JOIN airports AS T3 ON T2.SourceAirport = T3.AirportCode WHERE T3.AirportCode = 'APG' INTERSECT SELECT T1.Airline FROM airlines AS T1 JOIN flights AS T2 ON T1.uid = T2.Airline JOIN airports AS T3 ON T2.SourceAirport = T3.AirportCode WHERE T3.AirportCode = 'CVO',1,extra hard,0
+tvshow,What is the number of cartoones written by Joseph Kuhr?,"SELECT count(*) FROM Cartoon WHERE Written_by = ""Joseph Kuhr"";","<SQL_START> SELECT count(*) FROM cartoon WHERE Written_by = 'Joseph Kuhr' <SQL_END>  ### SQL
+<SQL_START> SELECT count(*) FROM cartoon WHERE Written_by = 'Joseph Kuhr' <SQL_END> 
+
+### Question
+What is the number of cartoones written by Joseph Kuhr?
+
+### SQL
+<SQL_START> SELECT count(*) FROM cartoon WHERE Written_by = 'Joseph Kuhr' <SQL_END>  ### SQL
+<SQL_START> SELECT count(*) FROM cartoon WHERE Written_by = 'Joseph Kuhr' <SQL_END> 
+
+### Question
+What is the number of cartoones written by Joseph Kuhr?
+
+### SQL
+<SQL_START> SELECT count(*) FROM cartoon WHERE Written_by = 'Joseph Kuhr' <SQL_END>  ### SQL
+<SQL_START> SELECT count(*) FROM cartoon WHERE Written_by = 'Joseph Kuhr' <SQL_END> 
+
+### Question
+What is the number of cartoones written by Joseph Kuhr?
+
+### SQL
+<SQL_START> SELECT count(*) FROM cartoon WHERE Written_by = 'Joseph Kuhr' <SQL_END>  ### SQL
+<SQL_START> SELECT count(*) FROM cartoon WHERE Written_by = 'Joseph Kuhr' <SQL_END> 
+
+",SELECT count(*) FROM cartoon WHERE Written_by = 'Joseph Kuhr',1,easy,1
+student_transcripts_tracking,What is the program id and the summary of the degree that has the most students enrolled?,"SELECT T1.degree_program_id ,  T1.degree_summary_name FROM Degree_Programs AS T1 JOIN Student_Enrolment AS T2 ON T1.degree_program_id  =  T2.degree_program_id GROUP BY T1.degree_program_id ORDER BY count(*) DESC LIMIT 1","<SQL_START> SELECT T1.degree_program_id, T1.degree_summary_name FROM Degree_Programs AS T1 JOIN Student_Enrolment AS T2 ON T1.degree_program_id = T2.degree_program_id GROUP BY T1.degree_program_id ORDER BY count(*) DESC LIMIT 1 <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT T1.degree_program_id, T1.degree_summary_name FROM Degree_Programs AS T1 JOIN Student_Enrolment AS T2 ON T1.degree_program_id = T2.degree_program_id GROUP BY T1.degree_program_id, T1.degree_summary_name ORDER BY count(*) DESC LIMIT 1 <SQL_END> 
+
+### Explanation
+The original SQL query is missing the degree_summary_name in the GROUP BY clause. This will result in an error because the GROUP BY clause must include all non-aggregated columns. The correct SQL query includes both degree_program_id and degree_summary_name in the GROUP BY clause. The ORDER BY clause is also correct, as it orders the results by the count of students enrolled in descending order, and the LIMIT 1 clause returns only the top row, which is the program with the most students enrolled.  <SQL_END>  <SQL_END>  <SQL_END> ","SELECT T1.degree_program_id, T1.degree_summary_name FROM Degree_Programs AS T1 JOIN Student_Enrolment AS T2 ON T1.degree_program_id = T2.degree_program_id GROUP BY T1.degree_program_id ORDER BY count(*) DESC LIMIT 1",1,extra hard,0
+network_1,What are the names of high schoolers who have 3 or more friends?,SELECT T2.name FROM Friend AS T1 JOIN Highschooler AS T2 ON T1.student_id  =  T2.id GROUP BY T1.student_id HAVING count(*)  >=  3,<SQL_START> SELECT name FROM Highschooler WHERE ID IN ( SELECT student_id FROM Friend GROUP BY student_id HAVING count(*)  >=  3 ) <SQL_END>  <SQL_START> SELECT name FROM Highschooler WHERE ID IN ( SELECT student_id FROM Friend GROUP BY student_id HAVING count(*)  >=  3 ) <SQL_END>  <SQL_START> SELECT name FROM Highschooler WHERE ID IN ( SELECT student_id FROM Friend GROUP BY student_id HAVING count(*)  >=  3 ) <SQL_END>  <SQL_START> SELECT name FROM Highschooler WHERE ID IN ( SELECT student_id FROM Friend GROUP BY student_id HAVING count(*)  >=  3 ) <SQL_END>  <SQL_START> SELECT name FROM Highschooler WHERE ID IN ( SELECT student_id FROM Friend GROUP BY student_id HAVING count(*)  >=  3 ) <SQL_END>  <SQL_START> SELECT name FROM Highschooler WHERE ID IN ( SELECT student_id FROM Friend GROUP BY student_id HAVING count(*)  >=  3 ) <SQL_END>  <SQL_START> SELECT name FROM Highschooler WHERE ID IN ( SELECT student_id FROM Friend GROUP BY student_id HAVING count(*) ,SELECT name FROM Highschooler WHERE ID IN ( SELECT student_id FROM Friend GROUP BY student_id HAVING count(*) >= 3 ),1,hard,0
+car_1,"Which model saves the most gasoline? That is to say, have the maximum miles per gallon.",SELECT T1.Model FROM CAR_NAMES AS T1 JOIN CARS_DATA AS T2 ON T1.MakeId  =  T2.Id ORDER BY T2.mpg DESC LIMIT 1;,"<SQL_START> SELECT Model FROM model_list JOIN car_names ON model_list.Maker = car_names.MakeId JOIN cars_data ON car_names.MakeId = cars_data.Id ORDER BY MPG DESC LIMIT 1 <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Model FROM model_list JOIN car_names ON model_list.Maker = car_names.MakeId JOIN cars_data ON car_names.MakeId = cars_data.Id ORDER BY MPG DESC LIMIT 1 <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Model FROM model_list JOIN car_names ON model_list.Maker = car_names.MakeId JOIN cars_data ON car_names.MakeId = cars_data.Id ORDER BY MPG DESC LIMIT 1 <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Model FROM model_list JOIN car_names ON model_list.Maker = car_names.MakeId JOIN cars_data ON car_names.MakeId = cars_data.Id ORDER BY MPG DESC LIMIT 1 <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Model FROM model_list JOIN car_names ON model_list.Maker = car_names.MakeId JOIN cars_data ON car_names.MakeId = cars_data.Id ORDER BY MPG DESC LIMIT 1 <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT Model",SELECT Model FROM model_list JOIN car_names ON model_list.Maker = car_names.MakeId JOIN cars_data ON car_names.MakeId = cars_data.Id ORDER BY MPG DESC LIMIT 1,1,hard,0
+network_1,How many friends does the high school student Kyle have?,"SELECT count(*) FROM Friend AS T1 JOIN Highschooler AS T2 ON T1.student_id  =  T2.id WHERE T2.name  =  ""Kyle""","<SQL_START> SELECT count(*) FROM Friend WHERE student_id IN ( SELECT ID FROM Highschooler WHERE name = 'Kyle' ) <SQL_END>  </SQL_START>  <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT count(*) FROM Friend WHERE student_id IN ( SELECT ID FROM Highschooler WHERE name = 'Kyle' ) <SQL_END>  </SQL_START>  <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT count(*) FROM Friend WHERE student_id IN ( SELECT ID FROM Highschooler WHERE name = 'Kyle' ) <SQL_END>  </SQL_START>  <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT count(*) FROM Friend WHERE student_id IN ( SELECT ID FROM Highschooler WHERE name = 'Kyle' ) <SQL_END>  </SQL_START>  <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT count(*) FROM Friend WHERE student_id IN ( SELECT ID FROM Highschooler WHERE name = 'Kyle' ) <SQL_END>  </SQL_START>  <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT count(*) FROM Friend WHERE student_id IN ( SELECT ID FROM Highschooler WHERE name = 'Kyle'",SELECT count(*) FROM Friend WHERE student_id IN ( SELECT ID FROM Highschooler WHERE name = 'Kyle' ),1,medium,0
+car_1,In which years cars were produced weighing no less than 3000 and no more than 4000 ?,select distinct year from cars_data where weight between 3000 and 4000;,"<SQL_START> SELECT Year FROM cars_data WHERE Weight BETWEEN 3000 AND 4000 <SQL_END>  ### SQL
+<SQL_START> SELECT Year FROM cars_data WHERE Weight BETWEEN 3000 AND 4000 <SQL_END> 
+
+### SQL
+<SQL_START> SELECT Year FROM cars_data WHERE Weight BETWEEN 3000 AND 4000 <SQL_END>  ### SQL
+<SQL_START> SELECT Year FROM cars_data WHERE Weight BETWEEN 3000 AND 4000 <SQL_END> 
+
+### SQL
+<SQL_START> SELECT Year FROM cars_data WHERE Weight BETWEEN 3000 AND 4000 <SQL_END>  ### SQL
+<SQL_START> SELECT Year FROM cars_data WHERE Weight BETWEEN 3000 AND 4000 <SQL_END> 
+
+### SQL
+<SQL_START> SELECT Year FROM cars_data WHERE Weight BETWEEN 3000 AND 4000 <SQL_END>  ### SQL
+<SQL_START> SELECT Year FROM cars_data WHERE Weight BETWEEN 3000 AND 4000 <SQL_END> 
+
+### SQL
+<SQL_START> SELECT Year FROM cars_data WHERE Weight BETWEEN 3000 AND 4000 <SQL_END>  ### SQL
+<SQL_START> SELECT Year FROM cars_data WHERE Weight BETWEEN ",SELECT Year FROM cars_data WHERE Weight BETWEEN 3000 AND 4000,1,easy,0
+wta_1,What is the name of the winner with the most rank points who participated in the Australian Open tournament?,SELECT winner_name FROM matches WHERE tourney_name  =  'Australian Open' ORDER BY winner_rank_points DESC LIMIT 1,"<SQL_START> SELECT T1.first_name, T1.last_name FROM players AS T1 JOIN rankings AS T2 ON T1.player_id  =  T2.player_id JOIN matches AS T3 ON T1.player_id  =  T3.winner_id WHERE T3.tourney_name  =  'Australian Open' GROUP BY T1.first_name, T1.last_name ORDER BY T2.ranking_points DESC LIMIT 1 <SQL_END>  <SQL_START> SELECT T1.first_name, T1.last_name FROM players AS T1 JOIN rankings AS T2 ON T1.player_id  =  T2.player_id JOIN matches AS T3 ON T1.player_id  =  T3.winner_id WHERE T3.tourney_name  =  'Australian Open' GROUP BY T1.first_name, T1.last_name ORDER BY T2.ranking_points DESC LIMIT 1 <SQL_END>  <SQL_START> SELECT T1.first_name, T1.last_name FROM players AS T1 JOIN rankings AS T2 ON T1.player_id  =  T2.player_id JOIN matches AS T3 ON T1.player_id  =  T3.winner_id WHERE T3.tourney_name  =  'Australian Open' GROUP","SELECT T1.first_name, T1.last_name FROM players AS T1 JOIN rankings AS T2 ON T1.player_id = T2.player_id JOIN matches AS T3 ON T1.player_id = T3.winner_id WHERE T3.tourney_name = 'Australian Open' GROUP BY T1.first_name, T1.last_name ORDER BY T2.ranking_points DESC LIMIT 1",1,hard,0
+network_1,Return the grade that has the greatest number of high schoolers.,SELECT grade FROM Highschooler GROUP BY grade ORDER BY count(*) DESC LIMIT 1,"<SQL_START> SELECT grade FROM highschooler GROUP BY grade ORDER BY count(*) DESC LIMIT 1 <SQL_END>  ### Database Schema
+Highschooler : ID (number), name (text), grade (number) | Friend : student_id (number), friend_id (number) | Likes : student_id (number), liked_id (number)
+
+### Primary Keys
+Highschooler : ID | Friend : student_id | Likes : student_id
+
+",SELECT grade FROM highschooler GROUP BY grade ORDER BY count(*) DESC LIMIT 1,1,hard,1
+world_1,What are the names of all the countries that became independent after 1950?,SELECT Name FROM country WHERE IndepYear  >  1950,"<SQL_START> SELECT Name FROM country WHERE IndepYear > 1950 <SQL_END>  ### SQL
+<SQL_START> SELECT Name FROM country WHERE IndepYear > 1950 <SQL_END> 
+
+### Question
+What are the names of all the countries that have a population of more than 100 million?
+
+### SQL
+<SQL_START> SELECT Name FROM country WHERE Population > 100000000 <SQL_END> 
+
+### Question
+What are the names of all the countries that have a population of more than 100 million and are located in the continent of Asia?
+
+### SQL
+<SQL_START> SELECT Name FROM country WHERE Population > 100000000 AND Continent = 'Asia' <SQL_END> 
+
+### Question
+What are the names of all the countries that have a population of more than 100 million and are located in the continent of Asia, and what is their population?
+
+### SQL
+<SQL_START> SELECT Name, Population FROM country WHERE Population > 100000000 AND Continent = 'Asia' <SQL_END> 
+
+### Question
+What are the names of all the countries that have a population of more than 100 million and are located in the continent of Asia, and what is their population, and what is their",SELECT Name FROM country WHERE IndepYear > 1950,1,easy,1
+orchestra,"Return the record companies of orchestras, sorted descending by the years in which they were founded.",SELECT Record_Company FROM orchestra ORDER BY Year_of_Founded DESC,"<SQL_START> SELECT T1.Record_Company FROM orchestra AS T1 JOIN conductor AS T2 ON T1.Conductor_ID  =  T2.Conductor_ID ORDER BY T1.Year_of_Founded DESC <SQL_END> 
+
+### Corrected SQL
+<SQL_START> SELECT T1.Record_Company FROM orchestra AS T1 JOIN conductor AS T2 ON T1.Conductor_ID  =  T2.Conductor_ID ORDER BY T1.Year_of_Founded <SQL_END> 
+
+### Explanation
+The original SQL query had an extra keyword ""DESC"" in the ORDER BY clause. This keyword is used to sort the results in descending order, but it is not necessary in this case because the default sort order is ascending. Therefore, the corrected SQL query simply removes the ""DESC"" keyword. 
+
+### Corrected SQL
+<SQL_START> SELECT T1.Record_Company FROM orchestra AS T1 JOIN conductor AS T2 ON T1.Conductor_ID  =  T2.Conductor_ID ORDER BY T1.Year_of_Founded <SQL_END>  is incorrect. The correct SQL is <SQL_START> SELECT T1.Record_Company FROM orchestra AS T1 JOIN conductor AS T2 ON T1.Conductor_ID  =  T2.Conductor_ID",SELECT T1.Record_Company FROM orchestra AS T1 JOIN conductor AS T2 ON T1.Conductor_ID = T2.Conductor_ID ORDER BY T1.Year_of_Founded DESC,1,easy,0
+car_1,How many countries has more than 2 car makers ?,select count(*) from countries as t1 join car_makers as t2 on t1.countryid  =  t2.country group by t1.countryid having count(*)  >  2,"<SQL_START> SELECT count(*) FROM countries WHERE CountryId IN ( SELECT Id FROM car_makers GROUP BY Country HAVING count(*)  >  2 ) <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT count(*) FROM countries WHERE CountryId IN ( SELECT CountryId FROM car_makers GROUP BY Country HAVING count(*)  >  2 ) <SQL_END>  ### Correct SQL
+<SQL_START> SELECT count(*) FROM countries WHERE CountryId IN ( SELECT CountryId FROM car_makers GROUP BY Country HAVING count(*)  >  2 ) <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT count(*) FROM countries WHERE CountryId IN ( SELECT CountryId FROM car_makers GROUP BY Country HAVING count(*)  >  2 ) <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT count(*) FROM countries WHERE CountryId IN ( SELECT CountryId FROM car_makers GROUP BY Country HAVING count(*)  >  2 ) <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT count(*) FROM countries WHERE CountryId IN ( SELECT CountryId FROM car_makers GROUP BY Country HAVING count(*)  >  2 ) <SQL_END> 
+
+### Correct SQL",SELECT count(*) FROM countries WHERE CountryId IN ( SELECT Id FROM car_makers GROUP BY Country HAVING count(*) > 2 ),1,hard,0
+pets_1,Find the number of distinct type of pets.,SELECT count(DISTINCT pettype) FROM pets,"<SQL_START> SELECT count(DISTINCT PetType) FROM Pets <SQL_END>  ### SQL
+<SQL_START> SELECT count(DISTINCT PetType) FROM Pets <SQL_END> 
+
+### SQL
+<SQL_START> SELECT count(DISTINCT PetType) FROM Pets <SQL_END>  ### SQL
+<SQL_START> SELECT count(DISTINCT PetType) FROM Pets <SQL_END> 
+
+### SQL
+<SQL_START> SELECT count(DISTINCT PetType) FROM Pets <SQL_END>  ### SQL
+<SQL_START> SELECT count(DISTINCT PetType) FROM Pets <SQL_END> 
+
+### SQL
+<SQL_START> SELECT count(DISTINCT PetType) FROM Pets <SQL_END>  ### SQL
+<SQL_START> SELECT count(DISTINCT PetType) FROM Pets <SQL_END> 
+
+### SQL
+<SQL_START> SELECT count(DISTINCT PetType) FROM Pets <SQL_END>  ### SQL
+<SQL_START> SELECT count(DISTINCT PetType) FROM Pets <SQL_END> 
+
+### SQL
+<SQL_START> SELECT count(DISTINCT PetType) FROM Pets <SQL_END>  ### SQL
+<SQL_START> SELECT count(DISTINCT PetType) FROM Pets",SELECT count(DISTINCT PetType) FROM Pets,1,easy,1
+dog_kennels,List the arrival date and the departure date for all the dogs.,"SELECT date_arrived ,  date_departed FROM Dogs","<SQL_START> SELECT date_arrived, date_departed FROM Dogs <SQL_END>  ### SQL
+
+","SELECT date_arrived, date_departed FROM Dogs",1,medium,0
+battle_death,"Show names, results and bulgarian commanders of the battles with no ships lost in the 'English Channel'.","SELECT name ,  RESULT ,  bulgarian_commander FROM battle EXCEPT SELECT T1.name ,  T1.result ,  T1.bulgarian_commander FROM battle AS T1 JOIN ship AS T2 ON T1.id  =  T2.lost_in_battle WHERE T2.location  =  'English Channel'","<SQL_START> SELECT T1.name, T1.result, T1.bulgarian_commander FROM battle AS T1 JOIN ship AS T2 ON T1.id  =  T2.lost_in_battle WHERE T2.location  =  'English Channel' <SQL_END>  EXCEPT <SQL_START> SELECT T1.name, T1.result, T1.bulgarian_commander FROM battle AS T1 JOIN ship AS T2 ON T1.id  =  T2.lost_in_battle <SQL_END>  <SQL_START> SELECT T1.name, T1.result, T1.bulgarian_commander FROM battle AS T1 <SQL_END>  <SQL_START> SELECT T2.name, T2.disposition_of_ship, T2.tonnage, T2.ship_type, T2.location, T2.id FROM ship AS T2 <SQL_END>  WHERE T2.location  =  'English Channel' <SQL_END>  <SQL_START> SELECT T1.name, T1.result, T1.bulgarian_commander FROM battle AS T1 JOIN ship AS T2 ON T1.id  =  T2.lost_in_battle WHERE T2.location  =  'English Channel'","SELECT T1.name, T1.result, T1.bulgarian_commander FROM battle AS T1 JOIN ship AS T2 ON T1.id = T2.lost_in_battle WHERE T2.location = 'English Channel'",1,extra hard,0
+wta_1,Find the total number of matches.,SELECT count(*) FROM matches,<SQL_START> SELECT count(*) FROM matches <SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END> SQL_END>,SELECT count(*) FROM matches,1,easy,1
+car_1,What is the horsepower of the car with the largest accelerate?,SELECT T1.horsepower FROM CARS_DATA AS T1 ORDER BY T1.accelerate DESC LIMIT 1;,"<SQL_START> SELECT T1.Horsepower FROM cars_data AS T1 JOIN car_names AS T2 ON T1.Id = T2.MakeId ORDER BY T1.Accelerate DESC LIMIT 1 <SQL_END>  ### Database Schema
+continents : ContId (number), Continent (text) | countries : CountryId (number), CountryName (text), Continent (number) | car_makers : Id (number), Maker (text), FullName (text), Country (text) | model_list : ModelId (number), Maker (number), Model (text) | car_names : MakeId (number), Model (text), Make (text) | cars_data : Id (number), MPG (text), Cylinders (number), Edispl (number), Horsepower (text), Weight (number), Accelerate (number), Year (number)
+
+### Primary Keys
+continents : ContId | countries : CountryId | car_makers : Id | model_list : ModelId | car_names : MakeId | cars_data : Id
+
+",SELECT T1.Horsepower FROM cars_data AS T1 JOIN car_names AS T2 ON T1.Id = T2.MakeId ORDER BY T1.Accelerate DESC LIMIT 1,1,medium,0
+cre_Doc_Template_Mgt,Return the type code of the template type that the most templates belong to.,SELECT template_type_code FROM Templates GROUP BY template_type_code ORDER BY count(*) DESC LIMIT 1,"<SQL_START> SELECT Template_Type_Code FROM Templates GROUP BY Template_Type_Code ORDER BY count(*) DESC LIMIT 1 <SQL_END> 
+
+### Corrected SQL
+<SQL_START> SELECT Template_Type_Code FROM Templates GROUP BY Template_Type_Code ORDER BY count(*) DESC LIMIT 1 <SQL_END> 
+
+### Corrected SQL
+<SQL_START> SELECT Template_Type_Code FROM Templates GROUP BY Template_Type_Code ORDER BY count(*) DESC LIMIT 1 <SQL_END> 
+
+### Corrected SQL
+<SQL_START> SELECT Template_Type_Code FROM Templates GROUP BY Template_Type_Code ORDER BY count(*) DESC LIMIT 1 <SQL_END> 
+
+### Corrected SQL
+<SQL_START> SELECT Template_Type_Code FROM Templates GROUP BY Template_Type_Code ORDER BY count(*) DESC LIMIT 1 <SQL_END> 
+
+### Corrected SQL
+<SQL_START> SELECT Template_Type_Code FROM Templates GROUP BY Template_Type_Code ORDER BY count(*) DESC LIMIT 1 <SQL_END> 
+
+### Corrected SQL
+<SQL_START> SELECT Template_Type_Code FROM Templates GROUP BY Template_Type_Code ORDER BY count(*) DESC LIMIT 1 <SQL_END> 
+
+### Corrected SQL
+<SQL_START> SELECT Template_Type_Code FROM Templates GROUP BY Template_Type_Code ORDER BY count(*) DESC LIMIT 1 <SQL",SELECT Template_Type_Code FROM Templates GROUP BY Template_Type_Code ORDER BY count(*) DESC LIMIT 1,1,hard,1
+dog_kennels,What are the names of the dogs for which the owner has not spend more than 1000 for treatment ?,select name from dogs where dog_id not in ( select dog_id from treatments group by dog_id having sum(cost_of_treatment)  >  1000 ),"<SQL_START> SELECT T1.name FROM Dogs AS T1 JOIN Treatments AS T2 ON T1.dog_id  =  T2.dog_id JOIN Charges AS T3 ON T2.cost_of_treatment  =  T3.charge_amount WHERE T3.charge_amount  <=  1000 <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT T1.name FROM Dogs AS T1 JOIN Treatments AS T2 ON T1.dog_id  =  T2.dog_id JOIN Charges AS T3 ON T2.cost_of_treatment  =  T3.charge_id WHERE T3.charge_amount  <=  1000 <SQL_END> 
+
+### Explanation
+The correct SQL query should join the Treatments table with the Charges table on the charge_id column, not the charge_amount column. The charge_amount column is not a primary key in the Charges table, so it cannot be used for joining. The correct SQL query should also use the charge_id column in the WHERE clause to filter the results. 
+
+### Correct SQL
+<SQL_START> SELECT T1.name FROM Dogs AS T1 JOIN Treatments AS T2 ON T1.dog_id  =  T2.dog_id JOIN Charges AS",SELECT T1.name FROM Dogs AS T1 JOIN Treatments AS T2 ON T1.dog_id = T2.dog_id JOIN Charges AS T3 ON T2.cost_of_treatment = T3.charge_amount WHERE T3.charge_amount <= 1000,1,extra hard,0
+dog_kennels,"What are each owner's first name, last name, and the size of their dog?","SELECT T1.first_name ,  T1.last_name ,  T2.size_code FROM Owners AS T1 JOIN Dogs AS T2 ON T1.owner_id  =  T2.owner_id","<SQL_START> SELECT T1.first_name, T1.last_name, T2.size_description FROM Owners AS T1 JOIN Dogs AS T2 ON T1.owner_id  =  T2.owner_id <SQL_END>  <SQL_START> SELECT T1.first_name, T1.last_name, T2.size_description FROM Owners AS T1 JOIN Dogs AS T2 ON T1.owner_id  =  T2.owner_id <SQL_END>  <SQL_START> SELECT T1.first_name, T1.last_name, T2.size_description FROM Owners AS T1 JOIN Dogs AS T2 ON T1.owner_id  =  T2.owner_id <SQL_END>  <SQL_START> SELECT T1.first_name, T1.last_name, T2.size_description FROM Owners AS T1 JOIN Dogs AS T2 ON T1.owner_id  =  T2.owner_id <SQL_END>  <SQL_START> SELECT T1.first_name, T1.last_name, T2.size_description FROM Owners AS T1 JOIN Dogs AS T2 ON T1.owner_id  =  T2.owner_id <SQL_END>  <SQL_START> SELECT T1.first_name, T1.last_name, T2.size_description FROM Owners AS T1 JOIN Dogs","SELECT T1.first_name, T1.last_name, T2.size_description FROM Owners AS T1 JOIN Dogs AS T2 ON T1.owner_id = T2.owner_id",1,medium,0
+flight_2,What are the names of airports in Aberdeen?,"SELECT AirportName FROM AIRPORTS WHERE City = ""Aberdeen""","<SQL_START> SELECT AirportName FROM airports WHERE City = 'Aberdeen' <SQL_END>  ### SQL
+<SQL_START> SELECT AirportName FROM airports WHERE City  =  'Aberdeen' <SQL_END>  ### SQL
+<SQL_START> SELECT AirportName FROM airports WHERE City  =  'Aberdeen' <SQL_END>  ### SQL
+<SQL_START> SELECT AirportName FROM airports WHERE City  =  'Aberdeen' <SQL_END>  ### SQL
+<SQL_START> SELECT AirportName FROM airports WHERE City  =  'Aberdeen' <SQL_END>  ### SQL
+<SQL_START> SELECT AirportName FROM airports WHERE City  =  'Aberdeen' <SQL_END>  ### SQL
+<SQL_START> SELECT AirportName FROM airports WHERE City  =  'Aberdeen' <SQL_END>  ### SQL
+<SQL_START> SELECT AirportName FROM airports WHERE City  =  'Aberdeen' <SQL_END>  ### SQL
+<SQL_START> SELECT AirportName FROM airports WHERE City  =  'Aberdeen' <SQL_END>  ### SQL
+<SQL_START> SELECT AirportName FROM airports WHERE City  =  '",SELECT AirportName FROM airports WHERE City = 'Aberdeen',1,easy,1
+network_1,What are the names of high schoolers who both have friends and are liked?,SELECT T2.name FROM Friend AS T1 JOIN Highschooler AS T2 ON T1.student_id  =  T2.id INTERSECT SELECT T2.name FROM Likes AS T1 JOIN Highschooler AS T2 ON T1.liked_id  =  T2.id,"<SQL_START> SELECT T1.name FROM Highschooler AS T1 JOIN Friend AS T2 ON T1.ID = T2.student_id JOIN Likes AS T3 ON T1.ID = T3.student_id <SQL_END>  ### SQL
+<SQL_START> SELECT T1.name FROM Highschooler AS T1 JOIN Friend AS T2 ON T1.ID = T2.student_id JOIN Likes AS T3 ON T1.ID = T3.student_id <SQL_END>  ### SQL
+<SQL_START> SELECT T1.name FROM Highschooler AS T1 JOIN Friend AS T2 ON T1.ID = T2.student_id JOIN Likes AS T3 ON T1.ID = T3.student_id <SQL_END>  ### SQL
+<SQL_START> SELECT T1.name FROM Highschooler AS T1 JOIN Friend AS T2 ON T1.ID = T2.student_id JOIN Likes AS T3 ON T1.ID = T3.student_id <SQL_END>  ### SQL
+<SQL_START> SELECT T1.name FROM Highschooler AS T1 JOIN Friend AS T2 ON T1.ID = T2.student_id JOIN Likes AS T3 ON T1.ID = T3.student_id <SQL_END>  ### SQL
+<",SELECT T1.name FROM Highschooler AS T1 JOIN Friend AS T2 ON T1.ID = T2.student_id JOIN Likes AS T3 ON T1.ID = T3.student_id,1,extra hard,0
+network_1,Show the ids of high schoolers who have friends and are also liked by someone else.,SELECT student_id FROM Friend INTERSECT SELECT liked_id FROM Likes,<SQL_START> SELECT T1.ID FROM Highschooler AS T1 JOIN Friend AS T2 ON T1.ID = T2.student_id JOIN Likes AS T3 ON T1.ID = T3.student_id WHERE T2.friend_id!= T1.ID <SQL_END>  </SQL_START>  <SQL_END>  <SQL_START> SELECT T1.ID FROM Highschooler AS T1 JOIN Friend AS T2 ON T1.ID = T2.student_id JOIN Likes AS T3 ON T1.ID = T3.student_id WHERE T2.friend_id!= T1.ID <SQL_END>  </SQL_START>  <SQL_END>  <SQL_START> SELECT T1.ID FROM Highschooler AS T1 JOIN Friend AS T2 ON T1.ID = T2.student_id JOIN Likes AS T3 ON T1.ID = T3.student_id WHERE T2.friend_id!= T1.ID <SQL_END>  </SQL_START>  <SQL_END>  <SQL_START> SELECT T1.ID FROM Highschooler AS T1 JOIN Friend AS T2 ON T1.ID = T2.student_id JOIN Likes AS T3 ON T1.ID = T3.student_id WHERE T2.friend_id!= T1.ID <SQL_END,SELECT T1.ID FROM Highschooler AS T1 JOIN Friend AS T2 ON T1.ID = T2.student_id JOIN Likes AS T3 ON T1.ID = T3.student_id WHERE T2.friend_id!= T1.ID,1,extra hard,0
+car_1,What is the number of car models created by the car maker American Motor Company?,SELECT count(*) FROM CAR_MAKERS AS T1 JOIN MODEL_LIST AS T2 ON T1.Id  =  T2.Maker WHERE T1.FullName  =  'American Motor Company';,<SQL_START> SELECT count(*) FROM car_names AS T1 JOIN car_makers AS T2 ON T1.MakeId  =  T2.Id WHERE T2.Maker  =  'American Motor Company' <SQL_END>  <SQL_START> SELECT count(*) FROM car_names AS T1 JOIN car_makers AS T2 ON T1.MakeId  =  T2.Id WHERE T2.FullName  =  'American Motor Company' <SQL_END>  <SQL_START> SELECT count(*) FROM car_names AS T1 JOIN car_makers AS T2 ON T1.MakeId  =  T2.Id WHERE T2.Country  =  ( SELECT Country FROM countries WHERE Continent  =  ( SELECT ContId FROM continents WHERE Continent  =  'North America' ) ) AND T2.FullName  =  'American Motor Company' <SQL_END>  <SQL_START> SELECT count(*) FROM car_names AS T1 JOIN car_makers AS T2 ON T1.MakeId  =  T2.Id WHERE T2.Country  =  ( SELECT Country FROM countries WHERE Continent  =  ( SELECT ContId FROM continents WHERE Continent  =  'North America' ) ) AND T2.FullName  =  'American Motor Company',SELECT count(*) FROM car_names AS T1 JOIN car_makers AS T2 ON T1.MakeId = T2.Id WHERE T2.Maker = 'American Motor Company',1,medium,0
+concert_singer,Find the name and location of the stadiums which some concerts happened in the years of both 2014 and 2015.,"SELECT T2.name ,  T2.location FROM concert AS T1 JOIN stadium AS T2 ON T1.stadium_id  =  T2.stadium_id WHERE T1.Year  =  2014 INTERSECT SELECT T2.name ,  T2.location FROM concert AS T1 JOIN stadium AS T2 ON T1.stadium_id  =  T2.stadium_id WHERE T1.Year  =  2015","<SQL_START> SELECT T1.Name, T1.Location FROM stadium AS T1 JOIN concert AS T2 ON T1.Stadium_ID  =  T2.Stadium_ID WHERE T2.Year  =  '2014' INTERSECT SELECT T1.Name, T1.Location FROM stadium AS T1 JOIN concert AS T2 ON T1.Stadium_ID  =  T2.Stadium_ID WHERE T2.Year  =  '2015' <SQL_END>  INTERSECT  <SQL_START> SELECT T1.Name, T1.Location FROM stadium AS T1 JOIN concert AS T2 ON T1.Stadium_ID  =  T2.Stadium_ID WHERE T2.Year  =  '2015' <SQL_END>  INTERSECT  <SQL_START> SELECT T1.Name, T1.Location FROM stadium AS T1 JOIN concert AS T2 ON T1.Stadium_ID  =  T2.Stadium_ID WHERE T2.Year  =  '2014' <SQL_END>  INTERSECT  <SQL_START> SELECT T1.Name, T1.Location FROM stadium AS T1 JOIN concert AS T2 ON T1.Stadium_ID  =  T2.Stadium_ID WHERE T2.Year  =","SELECT T1.Name, T1.Location FROM stadium AS T1 JOIN concert AS T2 ON T1.Stadium_ID = T2.Stadium_ID WHERE T2.Year = '2014' INTERSECT SELECT T1.Name, T1.Location FROM stadium AS T1 JOIN concert AS T2 ON T1.Stadium_ID = T2.Stadium_ID WHERE T2.Year = '2015'",1,extra hard,0
+course_teach,List the name of teachers whose hometown is not `` Little Lever Urban District '' .,"select name from teacher where hometown != ""little lever urban district""","<SQL_START> SELECT Name FROM teacher WHERE Hometown!= 'Little Lever Urban District' <SQL_END>  ### SQL
+
+",SELECT Name FROM teacher WHERE Hometown!= 'Little Lever Urban District',1,easy,0
+battle_death,What are the name and results of the battles when the bulgarian commander is not 'Boril',"SELECT name ,  RESULT FROM battle WHERE bulgarian_commander != 'Boril'","<SQL_START> SELECT name, result FROM battle WHERE bulgarian_commander!= 'Boril' <SQL_END>  ### SQL
+<SQL_START> SELECT name, result FROM battle WHERE bulgarian_commander!= 'Boril' <SQL_END>  ### SQL
+<SQL_START> SELECT name, result FROM battle WHERE bulgarian_commander!= 'Boril' <SQL_END>  ### SQL
+<SQL_START> SELECT name, result FROM battle WHERE bulgarian_commander!= 'Boril' <SQL_END>  ### SQL
+<SQL_START> SELECT name, result FROM battle WHERE bulgarian_commander!= 'Boril' <SQL_END>  ### SQL
+<SQL_START> SELECT name, result FROM battle WHERE bulgarian_commander!= 'Boril' <SQL_END>  ### SQL
+<SQL_START> SELECT name, result FROM battle WHERE bulgarian_commander!= 'Boril' <SQL_END>  ### SQL
+<SQL_START> SELECT name, result FROM battle WHERE bulgarian_commander!= 'Boril' <SQL_END>  ### SQL
+<SQL_START> SELECT name, result FROM battle WHERE bulgarian_commander","SELECT name, result FROM battle WHERE bulgarian_commander!= 'Boril'",1,medium,0
+wta_1,List the names of all winners who played in both 2013 and 2016.,SELECT winner_name FROM matches WHERE YEAR  =  2013 INTERSECT SELECT winner_name FROM matches WHERE YEAR  =  2016,"<SQL_START> SELECT winner_name FROM matches WHERE year = 2013 INTERSECT SELECT winner_name FROM matches WHERE year = 2016 <SQL_END>  ### Database Schema
+players : player_id (number), first_name (text), last_name (text), hand (text), birth_date (time), country_code (text) | matches : best_of (number), draw_size (number), loser_age (number), loser_entry (text), loser_hand (text), loser_ht (number), loser_id (number), loser_ioc (text), loser_name (text), loser_rank (number), loser_rank_points (number), loser_seed (number), match_num (number), minutes (number), round (text), score (text), surface (text), tourney_date (time), tourney_id (text), tourney_level (text), tourney_name (text), winner_age (number), winner_entry (text), winner_hand (text), winner_ht (number), winner_id (number), winner_ioc (text), winner_name (text), winner_rank (number), winner_rank",SELECT winner_name FROM matches WHERE year = 2013 INTERSECT SELECT winner_name FROM matches WHERE year = 2016,1,extra hard,1
+wta_1,"What is the name of the winner who has won the most matches, and how many rank points does this player have?","SELECT winner_name ,  winner_rank_points FROM matches GROUP BY winner_name ORDER BY count(*) DESC LIMIT 1","<SQL_START> SELECT T1.first_name, T1.last_name, T2.ranking_points FROM players AS T1 JOIN rankings AS T2 ON T1.player_id  =  T2.player_id JOIN ( SELECT winner_id, count(*) AS num FROM matches GROUP BY winner_id ) AS T3 ON T1.player_id  =  T3.winner_id ORDER BY T3.num DESC LIMIT 1 <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT T1.first_name, T1.last_name, T2.ranking_points FROM players AS T1 JOIN rankings AS T2 ON T1.player_id  =  T2.player_id JOIN ( SELECT winner_id, count(*) AS num FROM matches GROUP BY winner_id ) AS T3 ON T1.player_id  =  T3.winner_id ORDER BY T3.num DESC LIMIT 1 <SQL_END> 
+
+### Explanation
+The SQL query provided is correct. It joins the players table with the rankings table and a subquery that counts the number of matches won by each player. The results are then ordered by the number of matches won in descending order and limited to the top result. This will give the name of the winner who has won the most matches and their ranking points.","SELECT T1.first_name, T1.last_name, T2.ranking_points FROM players AS T1 JOIN rankings AS T2 ON T1.player_id = T2.player_id JOIN ( SELECT winner_id, count(*) AS num FROM matches GROUP BY winner_id ) AS T3 ON T1.player_id = T3.winner_id ORDER BY T3.num DESC LIMIT 1",1,hard,0
+cre_Doc_Template_Mgt,Show all document names using templates with template type code BK.,"SELECT T2.document_name FROM Templates AS T1 JOIN Documents AS T2 ON T1.template_id  =  T2.template_id WHERE T1.template_type_code  =  ""BK""","<SQL_START> SELECT T2.Document_Name FROM Templates AS T1 JOIN Documents AS T2 ON T1.Template_ID  =  T2.Template_ID WHERE T1.Template_Type_Code  =  'BK' <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT T2.Document_Name FROM Templates AS T1 JOIN Documents AS T2 ON T1.Template_ID  =  T2.Template_ID WHERE T1.Template_Type_Code  =  'BK' <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT T2.Document_Name FROM Templates AS T1 JOIN Documents AS T2 ON T1.Template_ID  =  T2.Template_ID WHERE T1.Template_Type_Code  =  'BK' <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT T2.Document_Name FROM Templates AS T1 JOIN Documents AS T2 ON T1.Template_ID  =  T2.Template_ID WHERE T1.Template_Type_Code  =  'BK' <SQL_END> 
+
+### Correct SQL
+<SQL_START> SELECT T2.Document_Name FROM Templates AS T1 JOIN Documents AS T2 ON T1.Template_ID  =  T2.Template_ID WHERE T1.Template_Type_Code  =  'BK' <SQL_END> 
+
+",SELECT T2.Document_Name FROM Templates AS T1 JOIN Documents AS T2 ON T1.Template_ID = T2.Template_ID WHERE T1.Template_Type_Code = 'BK',1,medium,1
