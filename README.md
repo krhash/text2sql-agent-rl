@@ -13,14 +13,17 @@ TEXT2SQL-AGENT-RL/
         validation-00000-of-00001.parquet   # Spider validation set (1,034 examples)
         spider_schema_rows_v2.json          # DB schemas for all 160 databases
     jobs/
-        run_baseline.sh                     # sbatch job script for baseline inference
+        00_preprocess.sh ... 04_compare.sh  # sbatch job scripts for all stages
     models/                                 # LoRA checkpoints saved here during training
     notebooks/
         01_explore_spider.ipynb             # EDA notebook
     scripts/
-        baseline_inference.py               # Baseline inference script
-    results/                                # Output CSVs from inference/eval
+        pipeline.py                         # Unified orchestrator CLI wrapper
+        compare.py                          # Multi-run evaluation comparison CLI
+    text2sql/                               # Core pip-installable python package
+    results/                                # Output CSVs and caches from runs
     logs/                                   # sbatch job logs
+    PIPELINE_ARCHITECTURE.md                # In-depth architectural breakdown
     README.md
 ```
 
@@ -108,7 +111,7 @@ conda create -n texttosql python=3.11 -y
 source activate texttosql
 
 pip install torch --index-url https://download.pytorch.org/whl/cu121
-pip install transformers accelerate pandas pyarrow
+pip install -e ".[gpu]"
 ```
 
 ### Exit the compute node when done
@@ -133,7 +136,7 @@ The Spider dataset has known issues discovered during preprocessing:
 
 Validation set has zero examples on empty databases — evaluation numbers are clean.
 
-The `TrainingDataFilter` class in `reward.py` encapsulates all data quality decisions. `DBQueryExecutor` is intentionally unaware of these issues — it only executes queries and returns results.
+The `TrainingDataFilter` class in `text2sql/db/filter.py` encapsulates all data quality decisions. `DBQueryExecutor` is intentionally unaware of these issues — it only executes queries and returns results.
 
 The Explorer cluster is a shared resource used by hundreds of researchers simultaneously. You cannot simply SSH into a GPU machine and run code — instead you request resources through a **job scheduler** called **Slurm**, which manages the queue of all requests and allocates compute nodes fairly.
 
@@ -182,7 +185,7 @@ source activate texttosql
 
 # Step 3 — navigate to project and run
 cd ~/TEXT2SQL-AGENT-RL
-python scripts/baseline_inference.py
+python scripts/pipeline.py --run test_run --stages infer eval_string eval_exec report
 ```
 
 ### Batch Mode (`sbatch`)
@@ -192,7 +195,7 @@ Use this for full runs and training jobs. The job runs detached in the backgroun
 ```bash
 # Submit from the login node
 cd ~/TEXT2SQL-AGENT-RL
-sbatch jobs/run_baseline.sh
+sbatch jobs/01_baseline.sh
 
 # Returns a job ID, e.g:
 # Submitted batch job 1234567
@@ -257,30 +260,31 @@ Only output the SQL query, no explanation, no markdown, no code blocks.
 ```bash
 # From compute node
 cd ~/TEXT2SQL-AGENT-RL
-python scripts/baseline_inference.py --n_samples 50
+python scripts/pipeline.py --run sanity_check_v1 --stages infer eval_string --n_samples 50
 ```
 
 ### Run full validation set (batch)
 
 ```bash
 cd ~/TEXT2SQL-AGENT-RL
-sbatch jobs/run_baseline.sh
+sbatch jobs/01_baseline.sh
 ```
 
 ### Script arguments
 
-| Argument        | Default                                     | Description               |
-| --------------- | ------------------------------------------- | ------------------------- |
-| `--model_id`    | `meta-llama/Meta-Llama-3.1-8B-Instruct`     | HuggingFace model ID      |
-| `--data_path`   | `dataset/validation-00000-of-00001.parquet` | Validation parquet        |
-| `--schema_path` | `dataset/spider_schema_rows_v2.json`        | Schema file               |
-| `--output_path` | `results/baseline_results.csv`              | Where to save results     |
-| `--n_samples`   | `50`                                        | Number of examples to run |
-| `--dtype`       | `bfloat16`                                  | Model precision           |
+| Argument       | Default                                     | Description                               |
+| -------------- | ------------------------------------------- | ----------------------------------------- |
+| `--run`        | *(Required)*                                | Name of this active run (e.g. `baseline`) |
+| `--model_id`   | `meta-llama/Meta-Llama-3.1-8B-Instruct`     | HuggingFace model ID                      |
+| `--stages`     | `infer`, `eval_string`, etc                 | List of stages to run                     |
+| `--val_path`   | `dataset/validation-00000-of-00001.parquet` | Validation parquet                        |
+| `--schema_path`| `dataset/spider_schema_rows_v2.json`        | Schema file                               |
+| `--n_samples`  | `None`                                      | Number of examples to run                 |
+| `--dtype`      | `bfloat16`                                  | Model precision                           |
 
 ### Output
 
-Results are saved incrementally to `results/baseline_results.csv` after every example so progress is never lost if a job times out. The CSV contains:
+Results are saved incrementally to `results/<run_name>/predictions.csv` after every example so progress is never lost if a job times out. The CSV contains:
 
 | Column        | Description                       |
 | ------------- | --------------------------------- |

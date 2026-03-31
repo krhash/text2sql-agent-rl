@@ -1,4 +1,4 @@
-db_id,question,gold_sql,raw_output,pred_sql,tag_found,difficulty,exact_match
+db_id,question,true_sql,raw_output,pred_sql,tag_found,difficulty,exact_match
 student_transcripts_tracking,What are the names and id of courses having at most 2 sections?,"SELECT T1.course_name ,  T1.course_id FROM Courses AS T1 JOIN Sections AS T2 ON T1.course_id  =  T2.course_id GROUP BY T1.course_id HAVING count(*)  <=  2","<SQL_START> SELECT course_name, course_id FROM Courses WHERE course_id IN ( SELECT course_id FROM Sections GROUP BY course_id HAVING count(*) <= 2 ) <SQL_END> 
 
 ### Correct SQL

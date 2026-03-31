@@ -4,3 +4,6 @@
 /dataset/database
 /venv
 /scripts/__pycache__
+/text2sql.egg-info
+/text2sql/data/__pycache__
+/text2sql/__pycache__
