@@ -1,3 +1,6 @@
 /models
 /tokens
 /slide_updates
+/dataset/database
+/venv
+/scripts/__pycache__
