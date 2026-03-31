@@ -28,9 +28,9 @@ TEXT2SQL-AGENT-RL/
 
 ## Storage Layout on HPC
 
-| Location | What goes here |
-|---|---|
-| `~/TEXT2SQL-AGENT-RL/` | All project files — persistent, backed up |
+| Location                   | What goes here                                                            |
+| -------------------------- | ------------------------------------------------------------------------- |
+| `~/TEXT2SQL-AGENT-RL/`     | All project files — persistent, backed up                                 |
 | `/scratch/$USER/hf_cache/` | HuggingFace model weights (~16GB for Llama 3.1 8B) — large, not backed up |
 
 > **Important:** Never store large model weights in your home directory. The home quota is limited. The `HF_HOME` env variable in the job scripts redirects model downloads to `/scratch` automatically.
@@ -48,11 +48,14 @@ TEXT2SQL-AGENT-RL/
 ## 1. Cluster Access
 
 ### Connect to VPN
+
 You must be on the Northeastern VPN before connecting to the cluster.
+
 1. Open GlobalProtect
 2. Connect to `vpn.northeastern.edu` with your NU credentials
 
 ### SSH into Explorer
+
 ```bash
 ssh your_username@login.explorer.northeastern.edu
 ```
@@ -64,28 +67,33 @@ You will land on the **login node**. Do not run any compute jobs here — it is 
 ## 2. Upload Project Files
 
 From your **local machine**, upload the project folder via `scp`:
+
 ```bash
 scp -r /path/to/TEXT2SQL-AGENT-RL your_username@login.explorer.northeastern.edu:~/TEXT2SQL-AGENT-RL
 ```
 
 To sync changes after the initial upload (only uploads changed files):
+
 ```bash
 rsync -avz /path/to/TEXT2SQL-AGENT-RL/ your_username@login.explorer.northeastern.edu:~/TEXT2SQL-AGENT-RL/
 ```
 
 Verify files landed on the cluster:
+
 ```bash
 ls ~/TEXT2SQL-AGENT-RL/
 ```
 
 ---
 
-## 3. Environment Setup (One Time Only)
+## 6. Environment Setup (One Time Only)
 
 The conda environment only needs to be created once. Do this on an interactive compute node — not the login node.
 
 ### Request an interactive GPU node
+
 Run this from the login node:
+
 ```bash
 srun --partition=gpu-interactive --gres=gpu:a100:1 --mem=64GB --time=01:00:00 --pty /bin/bash
 ```
@@ -93,6 +101,7 @@ srun --partition=gpu-interactive --gres=gpu:a100:1 --mem=64GB --time=01:00:00 --
 Wait for the prompt to change — you will see the hostname change from `login-XX` to a compute node name like `[username@d1026 ~]$`. This confirms you are on a GPU node.
 
 ### Create the conda environment
+
 ```bash
 module load anaconda3/2024.06
 conda create -n texttosql python=3.11 -y
@@ -103,13 +112,28 @@ pip install transformers accelerate pandas pyarrow
 ```
 
 ### Exit the compute node when done
+
 ```bash
 exit
 ```
 
 ---
 
-## 4. What is a Job?
+## 4. Data Quality Notes
+
+The Spider dataset has known issues discovered during preprocessing:
+
+| Issue                                            | Affected             | Handling                                                              |
+| ------------------------------------------------ | -------------------- | --------------------------------------------------------------------- |
+| Gold SQL fails to execute                        | 2 train, 1 val       | Cached as failed — scores 0 for execution accuracy                    |
+| UTF-8 encoding error (`wta_1`)                   | 1 val                | Fixed with `errors='replace'` in executor                             |
+| Fully empty database (`music_2`)                 | 100 train            | `TrainingDataFilter` returns `is_reliable=False`                      |
+| Partially empty tables (`sakila_1`, `formula_1`) | ~32 train            | `TrainingDataFilter` returns `is_reliable=False` for affected queries |
+| Duplicate gold queries                           | 3,019 train, 470 val | Deduplicated in gold cache                                            |
+
+Validation set has zero examples on empty databases — evaluation numbers are clean.
+
+The `TrainingDataFilter` class in `reward.py` encapsulates all data quality decisions. `DBQueryExecutor` is intentionally unaware of these issues — it only executes queries and returns results.
 
 The Explorer cluster is a shared resource used by hundreds of researchers simultaneously. You cannot simply SSH into a GPU machine and run code — instead you request resources through a **job scheduler** called **Slurm**, which manages the queue of all requests and allocates compute nodes fairly.
 
@@ -132,6 +156,7 @@ Many users submitting jobs
 This is why you never run code on the login node — the login node is just the entry point to the cluster, it has no GPUs and is shared by everyone for file management and job submission only.
 
 **Key things Slurm controls:**
+
 - Which physical GPU node your job runs on (you don't choose)
 - How much memory and how many CPUs you get
 - Maximum wall time — your job is killed when time runs out regardless of whether it finished
@@ -144,6 +169,7 @@ This is why you never run code on the login node — the login node is just the 
 There are two ways to run jobs on the cluster.
 
 ### Interactive Mode (`srun`)
+
 Use this for development, debugging, and short sanity checks. Your terminal stays connected and you see output live. **Keep your terminal window open — if the SSH session drops, the job is killed.**
 
 ```bash
@@ -160,6 +186,7 @@ python scripts/baseline_inference.py
 ```
 
 ### Batch Mode (`sbatch`)
+
 Use this for full runs and training jobs. The job runs detached in the background — you can close your terminal or disconnect and the job continues running. Output is written to a log file.
 
 ```bash
@@ -172,6 +199,7 @@ sbatch jobs/run_baseline.sh
 ```
 
 Monitor the job:
+
 ```bash
 # Check job status
 squeue --me
@@ -185,12 +213,12 @@ scancel 1234567
 
 ### When to use which
 
-| Situation | Use |
-|---|---|
-| Testing a script works | `srun` interactive |
+| Situation                           | Use                |
+| ----------------------------------- | ------------------ |
+| Testing a script works              | `srun` interactive |
 | Checking GPU memory / output format | `srun` interactive |
-| Full dataset inference | `sbatch` |
-| LoRA training (hours long) | `sbatch` always |
+| Full dataset inference              | `sbatch`           |
+| LoRA training (hours long)          | `sbatch` always    |
 
 > **Note:** For interactive `srun` sessions, keep your terminal window open for the duration. If the SSH session drops, the job is killed immediately.
 
@@ -201,7 +229,9 @@ scancel 1234567
 The baseline runs Llama 3.1 8B Instruct on Spider validation examples using a schema-aware prompt. Each question is paired with the relevant database schema and the model generates a SQL query. Results are evaluated with exact match accuracy broken down by difficulty level (easy / medium / hard / extra hard).
 
 ### Prompt format
+
 Each example is formatted as:
+
 ```
 You are an expert SQL assistant. Given a database schema and a question,
 generate the correct SQL query.
@@ -223,6 +253,7 @@ Only output the SQL query, no explanation, no markdown, no code blocks.
 ```
 
 ### Run a 50-example sanity check (interactive)
+
 ```bash
 # From compute node
 cd ~/TEXT2SQL-AGENT-RL
@@ -230,45 +261,49 @@ python scripts/baseline_inference.py --n_samples 50
 ```
 
 ### Run full validation set (batch)
+
 ```bash
 cd ~/TEXT2SQL-AGENT-RL
 sbatch jobs/run_baseline.sh
 ```
 
 ### Script arguments
-| Argument | Default | Description |
-|---|---|---|
-| `--model_id` | `meta-llama/Meta-Llama-3.1-8B-Instruct` | HuggingFace model ID |
-| `--data_path` | `dataset/validation-00000-of-00001.parquet` | Validation parquet |
-| `--schema_path` | `dataset/spider_schema_rows_v2.json` | Schema file |
-| `--output_path` | `results/baseline_results.csv` | Where to save results |
-| `--n_samples` | `50` | Number of examples to run |
-| `--dtype` | `bfloat16` | Model precision |
+
+| Argument        | Default                                     | Description               |
+| --------------- | ------------------------------------------- | ------------------------- |
+| `--model_id`    | `meta-llama/Meta-Llama-3.1-8B-Instruct`     | HuggingFace model ID      |
+| `--data_path`   | `dataset/validation-00000-of-00001.parquet` | Validation parquet        |
+| `--schema_path` | `dataset/spider_schema_rows_v2.json`        | Schema file               |
+| `--output_path` | `results/baseline_results.csv`              | Where to save results     |
+| `--n_samples`   | `50`                                        | Number of examples to run |
+| `--dtype`       | `bfloat16`                                  | Model precision           |
 
 ### Output
+
 Results are saved incrementally to `results/baseline_results.csv` after every example so progress is never lost if a job times out. The CSV contains:
 
-| Column | Description |
-|---|---|
-| `db_id` | Database name |
-| `question` | Natural language question |
-| `gold_sql` | Ground truth SQL |
-| `pred_sql` | Model generated SQL |
-| `difficulty` | easy / medium / hard / extra hard |
-| `exact_match` | 1 if correct, 0 if not |
+| Column        | Description                       |
+| ------------- | --------------------------------- |
+| `db_id`       | Database name                     |
+| `question`    | Natural language question         |
+| `gold_sql`    | Ground truth SQL                  |
+| `pred_sql`    | Model generated SQL               |
+| `difficulty`  | easy / medium / hard / extra hard |
+| `exact_match` | 1 if correct, 0 if not            |
 
 ### GPU memory requirements
-| dtype | VRAM needed |
-|---|---|
-| float32 | ~36 GB |
-| bfloat16 | ~20 GB |
-| float16 | ~20 GB |
+
+| dtype    | VRAM needed |
+| -------- | ----------- |
+| float32  | ~36 GB      |
+| bfloat16 | ~20 GB      |
+| float16  | ~20 GB      |
 
 An A100 40GB is the minimum recommended GPU for bfloat16 inference.
 
 ---
 
-## 7. Useful Commands
+## 11. Useful Commands
 
 ```bash
 # Check job queue
@@ -292,9 +327,10 @@ conda env list
 
 ---
 
-## 8. Troubleshooting
+## 12. Troubleshooting
 
 **`ModuleNotFoundError`** — conda environment not activated:
+
 ```bash
 module load anaconda3/2024.06
 source activate texttosql
@@ -305,16 +341,20 @@ source activate texttosql
 **SSH session dropped and killed the job** — use `sbatch` for any run longer than a few minutes. Interactive `srun` jobs are tied to your terminal and die if the connection drops.
 
 **Home directory quota exceeded** — model weights are in home instead of scratch. Check:
+
 ```bash
 du -sh ~/.cache/huggingface
 ```
+
 If large, move to scratch and set env variable:
+
 ```bash
 mv ~/.cache/huggingface /scratch/$USER/hf_cache
 export HF_HOME=/scratch/$USER/hf_cache
 ```
 
 **Long wait for GPU node** — request a less specific GPU type, or check availability:
+
 ```bash
 sinfo -o "%P %G %t %N" | grep gpu
 ```
