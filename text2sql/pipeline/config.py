@@ -30,20 +30,25 @@ class RunConfig:
     n_samples      : Optional[int] = None          # None = full val set
     dtype          : str           = "bfloat16"
     inference_from : Optional[str] = None          # copy predictions from named run
+    infer_model    : str           = "auto"        # auto | none | grpo | sft | <path>
 
     # ── Prompt optimization ──────────────────────────────────────────────
     n_opt_iterations : int = 5
     opt_sample_size  : int = 100
 
     # ── GRPO training ────────────────────────────────────────────────────
-    reward_fn  : str   = "composite"               # binary | composite
-    group_size : int   = 4
-    n_steps    : int   = 1000
-    kl_coef    : float = 0.1
-    lora_r     : int   = 16
-    lora_alpha : int   = 32
-    batch_size : int   = 8
-    learning_rate : float = 1e-4
+    reward_fn        : str   = "composite"         # binary | composite
+    group_size       : int   = 4
+    n_steps          : int   = 1000
+    kl_coef          : float = 0.1
+    lora_r           : int   = 16
+    lora_alpha       : int   = 32
+    batch_size       : int   = 8
+    learning_rate    : float = 1e-4
+    checkpoint_every : int   = 500                 # shared by GRPO + SFT
+
+    # ── SFT training ─────────────────────────────────────────────────────
+    sft_n_steps      : int   = 1000               # SFT uses n_steps if not set separately
 
     def run_dir(self) -> Path:
         return Path(self.results_dir) / self.run_name

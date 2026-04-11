@@ -3,6 +3,9 @@
 #SBATCH --partition=gpu
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:a100:1          # A single A100 40GB/80GB handles 8B base + LoRA
+# Override GPU at submission time:
+#   sbatch --gres=gpu:h100:1 jobs/03_grpo.sh
+#   sbatch --gres=gpu:l40:1  jobs/03_grpo.sh
 #SBATCH --mem=64GB
 #SBATCH --cpus-per-task=4
 #SBATCH --time=24:00:00       # RL training runs longer

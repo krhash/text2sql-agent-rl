@@ -1,4 +1,4 @@
-"""GRPOOptimizer - RL fine-tuning with Group Relative Policy Optimization."""
+"""SFTOptimizer - Supervised Fine-Tuning with LoRA and cross-entropy loss."""
 from __future__ import annotations
 
 import json
@@ -10,55 +10,50 @@ from typing import Optional
 from text2sql.data.types import Example
 from text2sql.inference.base import SQLGenerator
 from text2sql.training.base import SQLOptimizer
-from text2sql.training.rollout import sample_rollout, group_advantages
 
 log = logging.getLogger(__name__)
 
 
-class GRPOOptimizer(SQLOptimizer):
+class SFTOptimizer(SQLOptimizer):
     """
-    LoRA fine-tuning using Group Relative Policy Optimization.
+    Supervised Fine-Tuning via LoRA.
 
-    Each training step:
-      1. Sample K questions from train_data
-      2. Generate G completions per question (GPU -- temperature > 0)
-      3. Compute reward for each completion (CPU -- uses true_sql cache)
-      4. Compute group-relative advantages
-      5. Update LoRA weights via policy gradient + KL penalty
+    Each step:
+      1. Sample a batch of (prompt, true_sql) pairs from train_data.
+      2. Concatenate: full_text = prompt + true_sql
+      3. Tokenize and build a label tensor where prompt tokens are masked
+         to -100 (loss computed only on the SQL completion tokens).
+      4. Compute cross-entropy loss on completion tokens.
+      5. Backpropagate through LoRA adapter, clip gradients, step AdamW.
 
-    Checkpoint behaviour:
+    No reward function or rollouts required. Much faster per step than GRPO.
+
+    Checkpoint behaviour (identical pattern to GRPOOptimizer):
       - Periodic snapshots every `checkpoint_every` steps -> checkpoint-<step>/
       - Best val_score weights saved (overwritten in-place) -> checkpoint-best/
       - On resume, scans output_dir for highest checkpoint-<N> and continues
-      - training_done.flag points to checkpoint-best (not checkpoint-final)
+      - sft_done.flag points to checkpoint-best (or final if no val ran)
 
-    Returns a LoRAGenerator pointing at checkpoint-best (or final if no val ran).
+    Returns a LoRAGenerator pointing at checkpoint-best.
     """
 
     def __init__(
         self,
-        reward_fn,
         lora_config,
-        group_size      : int   = 4,
         n_steps         : int   = 1000,
-        kl_coef         : float = 0.1,
         batch_size      : int   = 8,
-        temperature     : float = 0.8,
-        learning_rate   : float = 1e-4,
+        learning_rate   : float = 2e-4,
         checkpoint_every: int   = 500,
-        output_dir      : Path  = Path("models/lora/grpo"),
+        output_dir      : Path  = Path("models/lora/sft"),
         log_path        : Optional[Path] = None,
         val_evaluator   = None,
         val_data        : Optional[list[Example]] = None,
         val_every       : int   = 50,
+        max_length      : int   = 1024,
     ):
-        self.reward_fn        = reward_fn
         self.lora_config      = lora_config
-        self.group_size       = group_size
         self.n_steps          = n_steps
-        self.kl_coef          = kl_coef
         self.batch_size       = batch_size
-        self.temperature      = temperature
         self.learning_rate    = learning_rate
         self.checkpoint_every = checkpoint_every
         self.output_dir       = Path(output_dir)
@@ -66,6 +61,7 @@ class GRPOOptimizer(SQLOptimizer):
         self.val_evaluator    = val_evaluator
         self.val_data         = val_data or []
         self.val_every        = val_every
+        self.max_length       = max_length
 
     # -- Resume helper ---------------------------------------------------------
 
@@ -88,6 +84,19 @@ class GRPOOptimizer(SQLOptimizer):
                     best_path = p
         return best_path, best_step
 
+    # -- Label masking helper --------------------------------------------------
+
+    @staticmethod
+    def _build_labels(input_ids, prompt_len: int):
+        """
+        Return a label tensor with -100 for all prompt tokens.
+        Loss is computed only on the completion (SQL) tokens.
+        """
+        import torch
+        labels = input_ids.clone()
+        labels[0, :prompt_len] = -100
+        return labels
+
     def optimize(
         self,
         generator  : SQLGenerator,
@@ -96,7 +105,7 @@ class GRPOOptimizer(SQLOptimizer):
         output_dir : Path,
     ) -> SQLGenerator:
         """
-        Run the GRPO training loop.
+        Run the SFT training loop.
         Returns a LoRAGenerator pointing at checkpoint-best.
         """
         try:
@@ -105,20 +114,20 @@ class GRPOOptimizer(SQLOptimizer):
             from torch.optim import AdamW
         except ImportError:
             raise ImportError(
-                "torch and peft are required for GRPO training. "
+                "torch and peft are required for SFT. "
                 "Install with: pip install torch peft"
             )
 
         from text2sql.inference.generator import LLMGenerator, LoRAGenerator
-        from text2sql.inference.sql_utils import SQLUtils
 
         if not isinstance(generator, LLMGenerator):
-            raise TypeError("GRPOOptimizer requires an LLMGenerator.")
+            raise TypeError("SFTOptimizer requires an LLMGenerator.")
 
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
         engine         = generator.engine
         prompt_builder = generator.prompt_builder
+        tokenizer      = engine.tokenizer
         device         = next(engine.model.parameters()).device
 
         # -- Resume or fresh start ---------------------------------------------
@@ -126,7 +135,7 @@ class GRPOOptimizer(SQLOptimizer):
 
         if resume_ckpt:
             log.info(
-                f"Resuming GRPO from checkpoint: {resume_ckpt} "
+                f"Resuming SFT from checkpoint: {resume_ckpt} "
                 f"(step {resume_step}/{self.n_steps})"
             )
             peft_model = PeftModel.from_pretrained(engine.model, str(resume_ckpt))
@@ -142,93 +151,63 @@ class GRPOOptimizer(SQLOptimizer):
             lr=self.learning_rate,
         )
 
-        # Reference model for KL penalty (frozen base weights)
-        ref_model = engine.model
-        ref_model.eval()
-
         # Best checkpoint tracking
         best_val_score = 0.0
         best_ckpt_dir  = self.output_dir / "checkpoint-best"
 
-        log_path = self.log_path or output_dir / "training_log.jsonl"
+        log_path = self.log_path or output_dir / "sft_training_log.jsonl"
 
         log.info(
-            f"Starting GRPO training: {self.n_steps} steps, "
-            f"K={self.batch_size} questions, G={self.group_size} completions"
+            f"Starting SFT training: {self.n_steps} steps, "
+            f"batch_size={self.batch_size}, lr={self.learning_rate}"
         )
 
         for step in range(resume_step + 1, self.n_steps + 1):
             batch = random.sample(train_data, min(self.batch_size, len(train_data)))
 
-            # -- ROLLOUT (GPU) -------------------------------------------------
-            engine.model = peft_model
-            all_outputs = sample_rollout(
-                engine, prompt_builder, batch,
-                group_size=self.group_size, temperature=self.temperature,
-            )
-            engine.model = ref_model  # restore reference
-
-            # -- REWARD (CPU) --------------------------------------------------
-            all_rewards: list[list[float]] = []
-            for example, group_outputs in zip(batch, all_outputs):
-                group_rewards = []
-                for raw_output in group_outputs:
-                    pred_sql, _ = SQLUtils.extract(raw_output)
-                    r = self.reward_fn.compute(example.db_id, pred_sql, example.true_sql)
-                    group_rewards.append(r.total)
-                all_rewards.append(group_rewards)
-
-            mean_reward = (
-                sum(r for group in all_rewards for r in group)
-                / (self.batch_size * self.group_size)
-            )
-
-            # -- ADVANTAGES ----------------------------------------------------
-            all_adv = group_advantages(all_rewards)
-
-            # -- POLICY GRADIENT + KL LOSS (GPU) --------------------------------
             peft_model.train()
             optimizer.zero_grad()
 
-            total_loss = torch.tensor(0.0, requires_grad=True, device=device)
+            step_loss = torch.tensor(0.0, device=device)
 
-            for example, group_outputs, group_adv in zip(batch, all_outputs, all_adv):
-                prompt = prompt_builder.build(example.question, example.db_id)
-                for completion, adv in zip(group_outputs, group_adv):
-                    full_text = prompt + completion
-                    inputs = engine.tokenizer(
-                        full_text, return_tensors="pt",
-                        truncation=True, max_length=1024,
-                    )
-                    inputs = {k: v.to(device) for k, v in inputs.items()}
+            for example in batch:
+                # Build full text: prompt + true SQL completion
+                prompt     = prompt_builder.build(example.question, example.db_id)
+                completion = example.true_sql
 
-                    with torch.no_grad():
-                        ref_logits = ref_model(**inputs).logits
-                    policy_logits = peft_model(**inputs).logits
+                # Tokenize prompt alone to get prompt length for masking
+                prompt_ids = tokenizer(
+                    prompt, return_tensors="pt", add_special_tokens=True
+                )["input_ids"]
+                prompt_len = prompt_ids.shape[1]
 
-                    log_probs_policy = torch.nn.functional.log_softmax(policy_logits, dim=-1)
-                    log_probs_ref    = torch.nn.functional.log_softmax(ref_logits,    dim=-1)
+                # Tokenize concatenated text within max_length
+                full_text = prompt + completion
+                inputs = tokenizer(
+                    full_text, return_tensors="pt",
+                    truncation=True, max_length=self.max_length,
+                )
+                input_ids = inputs["input_ids"].to(device)
+                attn_mask = inputs["attention_mask"].to(device)
 
-                    target_ids = inputs["input_ids"][:, 1:]
-                    lp_policy  = log_probs_policy[:, :-1].gather(2, target_ids.unsqueeze(-1)).squeeze(-1)
-                    lp_ref     = log_probs_ref[:,    :-1].gather(2, target_ids.unsqueeze(-1)).squeeze(-1)
+                # Mask prompt tokens from loss
+                labels = self._build_labels(input_ids, prompt_len).to(device)
 
-                    pg_loss    = -(adv * lp_policy.mean())
-                    kl         = (lp_policy - lp_ref).mean()
-                    loss       = pg_loss + self.kl_coef * kl
-                    total_loss = total_loss + loss
+                outputs = peft_model(
+                    input_ids=input_ids,
+                    attention_mask=attn_mask,
+                    labels=labels,
+                )
+                step_loss = step_loss + outputs.loss
 
-            total_loss = total_loss / (self.batch_size * self.group_size)
-            total_loss.backward()
+            step_loss = step_loss / len(batch)
+            step_loss.backward()
             torch.nn.utils.clip_grad_norm_(peft_model.parameters(), 1.0)
             optimizer.step()
 
             # -- LOGGING -------------------------------------------------------
             if step % 10 == 0:
-                log.info(
-                    f"  step={step:>4}  loss={total_loss.item():.4f}  "
-                    f"mean_reward={mean_reward:.4f}"
-                )
+                log.info(f"  step={step:>4}  loss={step_loss.item():.4f}")
 
             # -- VALIDATION MONITOR + BEST CHECKPOINT --------------------------
             val_score = None
@@ -240,7 +219,7 @@ class GRPOOptimizer(SQLOptimizer):
                 monitor_gen  = LLMGenerator(generator.name, engine, prompt_builder)
                 preds        = monitor_gen.generate_batch(val_sample, progress=False)
                 val_score    = self.val_evaluator.score(preds) * 100
-                engine.model = ref_model
+                engine.model = engine.model  # restore (peft_model IS engine.model here)
                 peft_model.train()
                 log.info(f"  [val] step={step}  string_match={val_score:.1f}%")
 
@@ -250,8 +229,7 @@ class GRPOOptimizer(SQLOptimizer):
                     log.info(f"  [best] New best {val_score:.1f}% -> {best_ckpt_dir}")
 
             entry = {
-                "step": step, "loss": total_loss.item(),
-                "mean_reward": mean_reward, "val_score": val_score,
+                "step": step, "loss": step_loss.item(), "val_score": val_score,
             }
             with open(log_path, "a", encoding="utf-8") as f:
                 f.write(json.dumps(entry) + "\n")
@@ -265,14 +243,13 @@ class GRPOOptimizer(SQLOptimizer):
         # -- FINAL CHECKPOINT --------------------------------------------------
         final_ckpt = self.output_dir / "checkpoint-final"
         peft_model.save_pretrained(str(final_ckpt))
-        log.info(f"Training complete. Final checkpoint -> {final_ckpt}")
+        log.info(f"SFT training complete. Final checkpoint -> {final_ckpt}")
 
-        # Inference uses best; fall back to final if no val monitor ran
         infer_ckpt = best_ckpt_dir if best_ckpt_dir.exists() else final_ckpt
         log.info(f"Inference checkpoint -> {infer_ckpt}  (best val: {best_val_score:.1f}%)")
 
         return LoRAGenerator(
-            name            = generator.name + "_grpo",
+            name            = generator.name + "_sft",
             base_engine     = generator.engine,
             lora_checkpoint = infer_ckpt,
             prompt_builder  = prompt_builder,

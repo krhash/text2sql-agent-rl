@@ -48,6 +48,7 @@ class ExperimentRunner:
     STAGE_ORDER = [
         "preprocess",
         "optimize_prompt",
+        "train_sft",
         "train_grpo",
         "infer",
         "eval_string",
@@ -88,6 +89,7 @@ class ExperimentRunner:
         return {
             "preprocess"     : d / "true_sql_cache_validation.json",
             "optimize_prompt": d / "best_prompt.json",
+            "train_sft"      : d / "sft_done.flag",
             "train_grpo"     : d / "training_done.flag",
             "infer"          : d / "predictions.csv",
             "eval_string"    : d / "eval_string.csv",
@@ -201,12 +203,117 @@ class ExperimentRunner:
             val_data     = val_data,
         ).optimize(gen, train_data, val_data, self.run_dir)
 
-        # Write flag so infer stage knows to load the LoRA checkpoint
+        # Write flag pointing to best checkpoint so infer knows where to load
         checkpoint = grpo_gen.lora_checkpoint
         (self.run_dir / "training_done.flag").write_text(str(checkpoint))
         self.log.info(f"Training complete. Checkpoint: {checkpoint}")
 
+    # ── Stage: train_sft ────────────────────────────────────────────────────
+
+    def train_sft(self):
+        from text2sql.data.dataset import SpiderDataset
+        from text2sql.data.schema import PromptBuilder
+        from text2sql.eval.string_match import StringMatchEvaluator
+        from text2sql.inference.engine import InferenceEngine
+        from text2sql.inference.generator import LLMGenerator
+        from text2sql.training.lora import default_lora_config
+        from text2sql.training.sft import SFTOptimizer
+        c = self.config
+
+        train_data = SpiderDataset(c.train_path).load()
+        val_data   = SpiderDataset(c.val_path).load(n=100)
+        engine     = InferenceEngine(c.model_id, c.dtype,
+                                     cache_dir=c.cache_dir, model_path=c.model_path)
+
+        # Use prompt-optimised prompt if available
+        prompt_path = self.run_dir / "best_prompt.json"
+        prompt = PromptBuilder.from_file(prompt_path) \
+                 if prompt_path.exists() else PromptBuilder(c.schema_path)
+
+        gen = LLMGenerator(c.run_name, engine, prompt)
+
+        lora_output = Path("models/lora") / c.run_name / "sft"
+        sft_gen = SFTOptimizer(
+            lora_config      = default_lora_config(r=c.lora_r, lora_alpha=c.lora_alpha),
+            n_steps          = c.sft_n_steps,
+            batch_size       = c.batch_size,
+            learning_rate    = c.learning_rate,
+            checkpoint_every = c.checkpoint_every,
+            output_dir       = lora_output,
+            log_path         = self.run_dir / "sft_training_log.jsonl",
+            val_evaluator    = StringMatchEvaluator(),
+            val_data         = val_data,
+        ).optimize(gen, train_data, val_data, self.run_dir)
+
+        checkpoint = sft_gen.lora_checkpoint
+        (self.run_dir / "sft_done.flag").write_text(str(checkpoint))
+        self.log.info(f"SFT complete. Checkpoint: {checkpoint}")
+
     # ── Stage: infer ──────────────────────────────────────────────────────────
+
+    def _resolve_generator(self, engine, prompt) -> "SQLGenerator":
+        """
+        Determine which generator to use for the infer stage.
+
+        --infer_model controls this explicitly:
+          auto   : auto-detect from flag files (backward compat)
+          none   : plain frozen Llama, no adapter
+          grpo   : LoRA from training_done.flag
+          sft    : LoRA from sft_done.flag
+          <path> : LoRA from the given filesystem path directly
+        """
+        from text2sql.inference.generator import LLMGenerator, LoRAGenerator
+        m = self.config.infer_model
+
+        if m == "none":
+            self.log.info("infer_model=none: using plain frozen Llama (no adapter)")
+            return LLMGenerator(self.config.run_name, engine, prompt)
+
+        elif m == "grpo":
+            flag = self.run_dir / "training_done.flag"
+            if not flag.exists():
+                raise FileNotFoundError(
+                    "--infer_model grpo: training_done.flag not found. "
+                    "Run train_grpo first."
+                )
+            ckpt = Path(flag.read_text().strip())
+            self.log.info(f"infer_model=grpo: loading GRPO checkpoint {ckpt}")
+            return LoRAGenerator(self.config.run_name, engine, ckpt, prompt)
+
+        elif m == "sft":
+            flag = self.run_dir / "sft_done.flag"
+            if not flag.exists():
+                raise FileNotFoundError(
+                    "--infer_model sft: sft_done.flag not found. "
+                    "Run train_sft first."
+                )
+            ckpt = Path(flag.read_text().strip())
+            self.log.info(f"infer_model=sft: loading SFT checkpoint {ckpt}")
+            return LoRAGenerator(self.config.run_name, engine, ckpt, prompt)
+
+        elif m == "auto":
+            # Backward-compatible auto detection: GRPO > SFT > plain
+            grpo_flag = self.run_dir / "training_done.flag"
+            sft_flag  = self.run_dir / "sft_done.flag"
+            if grpo_flag.exists():
+                ckpt = Path(grpo_flag.read_text().strip())
+                self.log.info(f"infer_model=auto: detected GRPO checkpoint {ckpt}")
+                return LoRAGenerator(self.config.run_name, engine, ckpt, prompt)
+            elif sft_flag.exists():
+                ckpt = Path(sft_flag.read_text().strip())
+                self.log.info(f"infer_model=auto: detected SFT checkpoint {ckpt}")
+                return LoRAGenerator(self.config.run_name, engine, ckpt, prompt)
+            else:
+                self.log.info("infer_model=auto: no adapter found, using plain Llama")
+                return LLMGenerator(self.config.run_name, engine, prompt)
+
+        else:
+            # Treat as a direct filesystem path
+            ckpt = Path(m)
+            if not ckpt.exists():
+                raise FileNotFoundError(f"--infer_model path not found: {ckpt}")
+            self.log.info(f"infer_model=<path>: loading checkpoint from {ckpt}")
+            return LoRAGenerator(self.config.run_name, engine, ckpt, prompt)
 
     def infer(self):
         c = self.config
@@ -219,7 +326,6 @@ class ExperimentRunner:
         from text2sql.data.dataset import SpiderDataset
         from text2sql.data.schema import PromptBuilder
         from text2sql.inference.engine import InferenceEngine
-        from text2sql.inference.generator import LLMGenerator, LoRAGenerator
         from text2sql.pipeline.io import save_predictions
 
         val_data = SpiderDataset(c.val_path).load(n=c.n_samples)
@@ -231,15 +337,8 @@ class ExperimentRunner:
         prompt = PromptBuilder.from_file(prompt_path) \
                  if prompt_path.exists() else PromptBuilder(c.schema_path)
 
-        # Auto-load LoRA checkpoint if train_grpo ran
-        flag_path = self.run_dir / "training_done.flag"
-        if flag_path.exists():
-            from pathlib import Path as P
-            lora_ckpt = P(flag_path.read_text().strip())
-            self.log.info(f"Loading LoRA checkpoint: {lora_ckpt}")
-            generator = LoRAGenerator(c.run_name, engine, lora_ckpt, prompt)
-        else:
-            generator = LLMGenerator(c.run_name, engine, prompt)
+        # Resolve which model/adapter to use for inference
+        generator = self._resolve_generator(engine, prompt)
 
         output_path = self.run_dir / "predictions.csv"
         self.log.info(f"Running inference on {len(val_data)} examples …")
@@ -321,6 +420,7 @@ class ExperimentRunner:
         return {
             "preprocess"     : self.preprocess,
             "optimize_prompt": self.optimize_prompt,
+            "train_sft"      : self.train_sft,
             "train_grpo"     : self.train_grpo,
             "infer"          : self.infer,
             "eval_string"    : self.eval_string,

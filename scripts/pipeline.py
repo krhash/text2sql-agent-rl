@@ -10,7 +10,7 @@ from text2sql.pipeline.config import RunConfig
 from text2sql.pipeline.runner import ExperimentRunner
 
 ALL_STAGES = [
-    "preprocess", "optimize_prompt", "train_grpo",
+    "preprocess", "optimize_prompt", "train_sft", "train_grpo",
     "infer", "eval_string", "eval_exec", "report",
 ]
 
@@ -54,14 +54,25 @@ def parse_args():
     p.add_argument("--opt_sample_size",  type=int, default=100)
 
     # GRPO
-    p.add_argument("--reward_fn",    default="composite", choices=["binary", "composite"])
-    p.add_argument("--group_size",   type=int, default=4)
-    p.add_argument("--n_steps",      type=int, default=1000)
-    p.add_argument("--kl_coef",      type=float, default=0.1)
-    p.add_argument("--lora_r",       type=int, default=16)
-    p.add_argument("--lora_alpha",   type=int, default=32)
-    p.add_argument("--batch_size",   type=int, default=8)
-    p.add_argument("--learning_rate",type=float, default=1e-4)
+    p.add_argument("--reward_fn",        default="composite", choices=["binary", "composite"])
+    p.add_argument("--group_size",       type=int, default=4)
+    p.add_argument("--n_steps",          type=int, default=1000)
+    p.add_argument("--kl_coef",          type=float, default=0.1)
+    p.add_argument("--lora_r",           type=int, default=16)
+    p.add_argument("--lora_alpha",       type=int, default=32)
+    p.add_argument("--batch_size",       type=int, default=8)
+    p.add_argument("--learning_rate",    type=float, default=1e-4)
+    p.add_argument("--checkpoint_every", type=int, default=500,
+                   help="Save a periodic LoRA checkpoint every N steps (GRPO + SFT).")
+
+    # SFT
+    p.add_argument("--sft_n_steps",      type=int, default=1000,
+                   help="Number of training steps for SFT (default same as n_steps).")
+
+    # Inference adapter selection
+    p.add_argument("--infer_model",      default="auto",
+                   help=("Which adapter to mount for the infer stage. "
+                         "Options: auto | none | grpo | sft | <path-to-lora-checkpoint>"))
 
     return p.parse_args()
 
@@ -83,6 +94,7 @@ def main():
         n_samples        = args.n_samples,
         dtype            = args.dtype,
         inference_from   = args.inference_from,
+        infer_model      = args.infer_model,
         n_opt_iterations = args.n_opt_iterations,
         opt_sample_size  = args.opt_sample_size,
         reward_fn        = args.reward_fn,
@@ -93,6 +105,8 @@ def main():
         lora_alpha       = args.lora_alpha,
         batch_size       = args.batch_size,
         learning_rate    = args.learning_rate,
+        checkpoint_every = args.checkpoint_every,
+        sft_n_steps      = args.sft_n_steps,
     )
     # Save config for reproducibility
     config.run_dir().mkdir(parents=True, exist_ok=True)
