@@ -37,7 +37,7 @@ Do not install Heavy Machine Learning packages on the `login-XX` node! You must 
 ### 1. Request an Interactive Compute Node
 Log into the cluster, then run:
 ```bash
-srun --partition=gpu-interactive --gres=gpu:a100:1 --mem=64GB --time=01:00:00 --pty /bin/bash
+srun --partition=sharing --gres=gpu:v100-sxm2:1 --mem=48GB --time=00:59:00 --pty /bin/bash
 ```
 *(Wait until your prompt changes from `login-XX` to something like `d1026` — this means you are on a node with a GPU!)*
 
@@ -122,35 +122,45 @@ sbatch jobs/04_compare.sh
 
 ---
 
-## 🛡️ Long Running Jobs & Crash Recovery
+## Long Running Jobs & Crash Recovery
 
-The Explorer cluster imposes strict time limits on jobs (e.g., 24 hours), and GPU memory (OOM) failures can happen. The entire text-to-SQL pipeline is designed to be **fully resumable and crash-safe**.
+The Explorer cluster imposes strict time limits and GPU OOM failures can occur. The pipeline is designed to be fully resumable.
 
-If your job times out, crashes, or is preempted by the cluster, **you simply submit the exact same `sbatch` command again.**
+If your job times out or crashes, resubmit the same `sbatch` command — no manual cleanup needed.
 
-Here is how the pipeline protects your progress:
+**Stage skipping:** If `train_grpo` completed but `infer` crashed, resubmitting skips the GRPO stage entirely and resumes at `infer`. The runner checks for the existence of each stage's output file before executing.
 
-1. **Stage Skipping (The Orchestrator):**
-   If you submit `--stages train_grpo infer eval_exec` and the job crashes *after* `train_grpo` completes but *during* `infer`, running it again will **skip** the 24-hour GRPO stage instantly and resume `infer`. It does this by checking for output files like `training_done.flag`.
+**Inference resuming:** The `infer` stage saves `predictions.csv` after every individual example. A crash at example 800/1000 resumes from example 801 on restart.
 
-2. **Incremental Inference (`infer` stage):**
-   The `LLMGenerator` saves predictions to `results/<run_name>/predictions.csv` incrementally after *every single example*. If you are generating 1,000 queries and the cluster crashes at query 800, restarting it will load the 800 completed queries and only generate the last 200.
+**LoRA checkpoint resume:** Both `train_grpo` and `train_sft` save periodic snapshots every N steps (default: every 200 steps). On restart, the trainer automatically scans the checkpoint directory for the highest-numbered `checkpoint-<N>` and continues from the next step.
 
-3. **Iterative Prompting (`optimize_prompt` stage):**
-   The Actor-Critique loop logs every iteration to `opt_history.jsonl` immediately. The best prompt discovered is permanently saved to `best_prompt.json`.
+```
+models/lora/<run_name>/
+  checkpoint-200/      <- periodic snapshot (for resume)
+  checkpoint-400/      <- periodic snapshot (for resume)
+  checkpoint-best/     <- best validation score (used by infer)
+  checkpoint-final/    <- end-of-training weights
+```
+
+To resume from a specific checkpoint explicitly:
+```bash
+# GRPO
+sbatch --export=ALL,GRPO_RESUME_FROM=models/lora/grpo_v1/checkpoint-400 jobs/03_grpo.sh
+
+# SFT
+sbatch --export=ALL,SFT_RESUME_FROM=models/lora/sft_v1/sft/checkpoint-400 jobs/04_sft.sh
+```
 
 ---
 
-## 🗄️ Model Weight & Cache Management
+## Model Weight & Cache Management
 
-HuggingFace loves silently downloading 16GB models and storing them completely arbitrarily inside of your `~/.cache/huggingface/` home directory.
+HuggingFace defaults to downloading model weights into `~/.cache/huggingface/`, which quickly exhausts the home directory quota on Northeastern's cluster.
 
-On Northeastern's HPC cluster, doing this will completely crash your allocation by exceeding your `HOME` disk quota limit! Those giant model blocks should always be written to the scratch storage partition instead.
-
-We solved this natively!
-If you open any script inside `jobs/*.sh`, you will notice this exact line:
+All `jobs/*.sh` scripts include:
 ```bash
 export HF_HOME=/scratch/$USER/hf_cache
 ```
 
-This ensures that whenever you execute scripts via `sbatch`, HuggingFace downloads Llama 3.1 precisely into your high-capacity scratch storage exactly **once**. Your future jobs will read those bytes perfectly with zero repeat downloads, zero environment duplication, and zero quota blowouts!
+This redirects all downloads to `/scratch`, which has a much larger quota. The model is downloaded once and reused across all subsequent jobs.
+

@@ -1,19 +1,16 @@
-# Executing Training & Evaluation pipelines
+# Training & Evaluation Command Reference
 
-This document outlines the exact `pipeline.py` sequences to run the different stages of the RL Text-To-SQL architecture. 
-
-It covers both **Interactive Testing** (for the login / interactive nodes) and **Production SLURM batch jobs** (for the massive training runs).
+All commands listed here assume you are running from inside `$PROJECT` (`~/TEXT2SQL-AGENT-RL/`) on the cluster, or from the repository root locally.
 
 ---
 
-## 1. Initial Setup: Global Preprocessing
-Before running *any* model inference, you must pre-execute the ground-truth SQL datasets against SQLite. This caches the matrices directly to disk so the GRPO algorithm has a fast mathematical Reward signal without bogging down the CPU dynamically.
+## 0. Preprocessing (Run once, globally)
+
+Executes all ground-truth SQL against local SQLite databases and caches the result matrices. Every training method shares this cache via `--cache_run preprocess`.
 
 ```bash
-# INTERACTIVE / LOCAL
-python scripts/pipeline.py \
-    --run preprocess \
-    --stages preprocess
+# Interactive
+python scripts/pipeline.py --run preprocess --stages preprocess
 
 # SLURM
 sbatch jobs/00_preprocess.sh
@@ -21,84 +18,149 @@ sbatch jobs/00_preprocess.sh
 
 ---
 
-## 2. Baseline Model
-This runs `infer` across the original frozen Llama 3.1 8B Instruct model using the default, hand-engineered system prompt. It serves as your mathematical baseline.
+## 1. Baseline
+
+No training. Runs frozen Llama 3.1 8B Instruct directly on the validation set with the default system prompt.
 
 ```bash
-# INTERACTIVE (Micro-test on 50 samples)
+# Interactive (50 samples)
 python scripts/pipeline.py \
     --run baseline_v1 \
     --cache_run preprocess \
     --stages infer eval_string eval_exec report \
-    --n_samples 50 \
-    --dtype bfloat16
+    --n_samples 50 --dtype bfloat16
 
-# SLURM (Runs full Spider dataset)
+# SLURM (full validation set)
 sbatch jobs/01_baseline.sh
 ```
 
 ---
 
-## 3. Prompt Optimization (Actor-Critique)
-This discovers a brand new instructional System Prompt. The model is forced to critique its own SQL failures and organically rewrite its own System prompt to maximize Strict String Adherence over multiple iterations.
+## 2. Prompt Optimization (Actor-Critique)
+
+Runs an iterative loop that rewrites the system prompt based on SQLite execution failures. Saves `best_prompt.json`, which `infer` picks up automatically.
 
 ```bash
-# INTERACTIVE (Micro-test constraints)
+# Interactive (2 iterations, 10 samples)
 python scripts/pipeline.py \
     --run fast_prompt_opt \
     --cache_run preprocess \
     --stages optimize_prompt infer eval_string eval_exec report \
-    --n_opt_iterations 2 \
-    --opt_sample_size 10 \
-    --n_samples 50 \
-    --dtype bfloat16
+    --n_opt_iterations 2 --opt_sample_size 10 --n_samples 50 --dtype bfloat16
 
-# SLURM (Tests 5 iterations against a batch of 100 before scoring)
+# SLURM (5 iterations, 100-sample optimization, full val set)
 sbatch jobs/02_prompt_opt.sh
 ```
-*Tracking file: `cat results/prompt_opt_v1/opt_history.jsonl`*
+
+Monitor: `cat results/prompt_opt_v1/opt_history.jsonl`
 
 ---
 
-## 4. GRPO Reinforcement Learning (LoRA)
-This structurally injects a Parameter-Efficient Fine-Tuning adapter into Llama 3.1 entirely via PyTorch. It gradients the attention weights over 1,000 steps utilizing execution advantage scoring over multiple stochastic rollouts against physical SQLite databases. 
+## 3. SFT — Supervised Fine-Tuning
+
+Fits a LoRA adapter using cross-entropy loss against ground-truth SQL completions. No reward computation. Faster per step than GRPO.
 
 ```bash
-# INTERACTIVE (Micro-test — check for OOM mapping issues)
+# Interactive (5 steps, checkpoint every 2)
+python scripts/pipeline.py \
+    --run fast_sft \
+    --cache_run preprocess \
+    --stages train_sft infer eval_string eval_exec report \
+    --sft_n_steps 5 --batch_size 2 --checkpoint_every 2 \
+    --infer_model sft --dtype bfloat16
+
+# SLURM (1000 steps)
+sbatch jobs/04_sft.sh
+
+# Override GPU at submission
+sbatch --gres=gpu:h100:1 jobs/04_sft.sh
+```
+
+Monitor: `cat results/sft_v1/sft_training_log.jsonl`
+
+Checkpoint location: `models/lora/sft_v1/sft/`
+
+---
+
+## 4. GRPO — Reinforcement Learning (LoRA)
+
+Fits a LoRA adapter with group-relative policy gradient, using SQLite execution accuracy as the reward signal.
+
+```bash
+# Interactive (10 steps, small batch)
 python scripts/pipeline.py \
     --run fast_grpo \
     --cache_run preprocess \
     --stages train_grpo infer eval_string eval_exec report \
-    --n_steps 10 \
-    --batch_size 2 \
-    --group_size 4 \
-    --kl_coef 0.1 \
-    --reward_fn composite \
-    --n_samples 50 \
-    --dtype bfloat16
+    --n_steps 10 --batch_size 2 --group_size 4 \
+    --kl_coef 0.1 --reward_fn composite \
+    --checkpoint_every 5 --n_samples 50 --dtype bfloat16
 
-# SLURM (Trains 1,000 full gradient descent steps over 6-12 hours)
+# SLURM (1000 steps)
 sbatch jobs/03_grpo.sh
+
+# Override GPU at submission
+sbatch --gres=gpu:h100:1 jobs/03_grpo.sh
 ```
-*Tracking file: `cat results/grpo_v1/training_log.jsonl` or `tail -f logs/grpo_<job_id>.out`*
+
+Monitor: `cat results/grpo_v1/training_log.jsonl`
+
+Checkpoint location: `models/lora/grpo_v1/`
 
 ---
 
-## 5. End-to-End Orchestrator
-To seamlessly launch the entirety of the project directly into the cluster one after another.
+## 5. Resuming Training After a Crash
+
+Both GRPO and SFT resume automatically when the job is resubmitted — they scan their checkpoint directory for the highest `checkpoint-<N>` and continue from the next step.
 
 ```bash
-# Wait for node availability and run 00 -> 01 -> 02 -> 03 automatically
-sbatch jobs/05_run_everything.sh
+# Automatic resume (just resubmit the same job)
+sbatch jobs/03_grpo.sh
+sbatch jobs/04_sft.sh
+
+# Resume GRPO from a specific checkpoint
+sbatch --export=ALL,GRPO_RESUME_FROM=models/lora/grpo_v1/checkpoint-400 jobs/03_grpo.sh
+
+# Resume SFT from a specific checkpoint
+sbatch --export=ALL,SFT_RESUME_FROM=models/lora/sft_v1/sft/checkpoint-400 jobs/04_sft.sh
+
+# Resume GRPO from best checkpoint (useful if training diverged after the peak)
+sbatch --export=ALL,GRPO_RESUME_FROM=models/lora/grpo_v1/checkpoint-best jobs/03_grpo.sh
 ```
 
 ---
 
-## 6. Final Project Reporting
-After successfully evaluating the Baseline, Prompt Optimizer, and GRPO RL pipelines, you can run this command locally to automatically suck up all `.csv` predictions generated in `results/<run_name>/predictions.csv` and dump them into a final comparative matrix suitable for an academic paper.
+## 6. Running Inference on a Specific Method
+
+The `--infer_model` flag controls which adapter the `infer` stage loads. Use this to evaluate a previously trained model without re-running the whole pipeline.
+
+```bash
+# Baseline (no adapter)
+python scripts/pipeline.py --run cmp_base --infer_model none \
+    --stages infer eval_string eval_exec report
+
+# SFT adapter
+python scripts/pipeline.py --run cmp_sft --infer_model sft \
+    --stages infer eval_string eval_exec report
+
+# GRPO adapter
+python scripts/pipeline.py --run cmp_grpo --infer_model grpo \
+    --stages infer eval_string eval_exec report
+
+# Specific checkpoint path
+python scripts/pipeline.py --run cmp_ckpt500 \
+    --infer_model models/lora/grpo_v1/checkpoint-500 \
+    --stages infer eval_string eval_exec report
+```
+
+---
+
+## 7. Final Comparison Report
+
+After all experiments complete, generate the cross-run comparison matrix:
 
 ```bash
 python scripts/compare.py \
-    --runs baseline_v1 prompt_opt_v1 grpo_v1 \
-    --output results/final_paper_matrix.txt
+    --runs baseline_v1 prompt_opt_v1 sft_v1 grpo_v1 \
+    --output results/final_comparison.txt
 ```

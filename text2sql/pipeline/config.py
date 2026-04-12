@@ -46,9 +46,11 @@ class RunConfig:
     batch_size       : int   = 8
     learning_rate    : float = 1e-4
     checkpoint_every : int   = 500                 # shared by GRPO + SFT
+    grpo_resume_from : Optional[str] = None        # explicit checkpoint path to seed resume from
 
     # ── SFT training ─────────────────────────────────────────────────────
-    sft_n_steps      : int   = 1000               # SFT uses n_steps if not set separately
+    sft_n_steps      : int            = 1000               # SFT uses n_steps if not set separately
+    sft_resume_from  : Optional[str]  = None               # explicit checkpoint path to seed SFT resume
 
     def run_dir(self) -> Path:
         return Path(self.results_dir) / self.run_name

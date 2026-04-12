@@ -1,14 +1,14 @@
 #!/bin/bash
 #SBATCH --job-name=grpo_v1
-#SBATCH --partition=gpu
+#SBATCH --partition=sharing
 #SBATCH --nodes=1
-#SBATCH --gres=gpu:a100:1          # A single A100 40GB/80GB handles 8B base + LoRA
+#SBATCH --gres=gpu:l40s:1
 # Override GPU at submission time:
-#   sbatch --gres=gpu:h100:1 jobs/03_grpo.sh
+#   sbatch --gres=gpu:a100:1 jobs/03_grpo.sh
 #   sbatch --gres=gpu:l40:1  jobs/03_grpo.sh
-#SBATCH --mem=64GB
+#SBATCH --mem=48GB
 #SBATCH --cpus-per-task=4
-#SBATCH --time=24:00:00       # RL training runs longer
+#SBATCH --time=00:59:00
 #SBATCH --output=/home/%u/TEXT2SQL-AGENT-RL/results/grpo_v1/slurm_%j.out
 #SBATCH --error=/home/%u/TEXT2SQL-AGENT-RL/results/grpo_v1/slurm_%j.err
 
@@ -22,11 +22,20 @@ mkdir -p $HF_HOME
 module load anaconda3/2024.06
 source activate texttosql
 
-echo "── Run ───────────────────────────────────────────────────────────────────────"
+# Must cd to project root so relative paths (dataset/, results/) resolve correctly.
+# LoRA checkpoints are saved to models/lora/grpo_v1/ relative to this directory.
+cd $PROJECT
+
+echo "-- Run -------------------------------------------------------------------"
 echo "Job started : $(date)"
 echo "Node        : $(hostname)"
 echo "GPU         : $(nvidia-smi --query-gpu=name --format=csv,noheader)"
+echo "Checkpoint  : ${GRPO_RESUME_FROM:-auto (scans models/lora/grpo_v1/)}"
 echo "Task        : GRPO Policy Gradient Optimization"
+
+# To resume from a specific checkpoint, pass GRPO_RESUME_FROM at submission:
+#   GRPO_RESUME_FROM=models/lora/grpo_v1/checkpoint-500 sbatch jobs/03_grpo.sh
+#   sbatch --export=ALL,GRPO_RESUME_FROM=models/lora/grpo_v1/checkpoint-500 jobs/03_grpo.sh
 
 python $PROJECT/scripts/pipeline.py \
     --run grpo_v1 \
@@ -35,6 +44,9 @@ python $PROJECT/scripts/pipeline.py \
     --n_steps 1000 \
     --group_size 4 \
     --kl_coef 0.1 \
-    --reward_fn composite
+    --reward_fn composite \
+    --checkpoint_every 50 \
+    --dtype bfloat16 \
+    ${GRPO_RESUME_FROM:+--grpo_resume_from $GRPO_RESUME_FROM}
 
 echo "GRPO experiment complete."

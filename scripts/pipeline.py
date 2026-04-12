@@ -64,10 +64,16 @@ def parse_args():
     p.add_argument("--learning_rate",    type=float, default=1e-4)
     p.add_argument("--checkpoint_every", type=int, default=500,
                    help="Save a periodic LoRA checkpoint every N steps (GRPO + SFT).")
+    p.add_argument("--grpo_resume_from", default=None,
+                   help="Explicit LoRA checkpoint path to seed GRPO resume from. "
+                        "If omitted, auto-scans output_dir for checkpoint-<N> dirs.")
 
     # SFT
     p.add_argument("--sft_n_steps",      type=int, default=1000,
                    help="Number of training steps for SFT (default same as n_steps).")
+    p.add_argument("--sft_resume_from",  default=None,
+                   help="Explicit LoRA checkpoint path to seed SFT resume from. "
+                        "If omitted, auto-scans output_dir for checkpoint-<N> dirs.")
 
     # Inference adapter selection
     p.add_argument("--infer_model",      default="auto",
@@ -106,7 +112,9 @@ def main():
         batch_size       = args.batch_size,
         learning_rate    = args.learning_rate,
         checkpoint_every = args.checkpoint_every,
+        grpo_resume_from = args.grpo_resume_from,
         sft_n_steps      = args.sft_n_steps,
+        sft_resume_from  = args.sft_resume_from,
     )
     # Save config for reproducibility
     config.run_dir().mkdir(parents=True, exist_ok=True)

@@ -1,11 +1,11 @@
 #!/bin/bash
 #SBATCH --job-name=prompt_opt_v1
-#SBATCH --partition=gpu
+#SBATCH --partition=sharing
 #SBATCH --nodes=1
-#SBATCH --gres=gpu:a100:1
-#SBATCH --mem=64GB
+#SBATCH --gres=gpu:l40s:1
+#SBATCH --mem=48GB
 #SBATCH --cpus-per-task=4
-#SBATCH --time=08:00:00
+#SBATCH --time=00:59:00
 #SBATCH --output=/home/%u/TEXT2SQL-AGENT-RL/results/prompt_opt_v1/slurm_%j.out
 #SBATCH --error=/home/%u/TEXT2SQL-AGENT-RL/results/prompt_opt_v1/slurm_%j.err
 
@@ -25,9 +25,11 @@ echo "Node        : $(hostname)"
 echo "GPU         : $(nvidia-smi --query-gpu=name --format=csv,noheader)"
 echo "Task        : Actor-Critique Prompt Optimization"
 
+cd $PROJECT
 python $PROJECT/scripts/pipeline.py \
     --run prompt_opt_v1 \
     --cache_run preprocess \
-    --stages optimize_prompt infer eval_string eval_exec report
+    --stages optimize_prompt infer eval_string eval_exec report \
+    --dtype bfloat16
 
 echo "Prompt optimization experiment complete."

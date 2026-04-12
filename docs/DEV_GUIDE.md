@@ -1,12 +1,14 @@
-# Developer Setup: Text-to-SQL RL Pipeline
+# Developer Guide: Text-to-SQL RL Pipeline
 
-This document outlines the environment setup, cluster deployment, and pipeline execution flow for developers contributing to the repository. The project uses Llama 3.1 8B Instruct, optimized via an Actor-Critic prompt loop and GRPO with LoRA adapters.
+This document covers environment setup, cluster deployment, pipeline architecture, and execution commands for developers working on this project.
+
+The project uses Llama 3.1 8B Instruct optimized via three approaches: Actor-Critic Prompt Optimization, Supervised Fine-Tuning (SFT), and Group Relative Policy Optimization (GRPO) with LoRA adapters.
 
 ---
 
 ## 1. Local Environment Setup
 
-The pipeline requires Python 3.11+. We recommend Conda for environment isolation.
+Requires Python 3.11+.
 
 ```bash
 # 1. Create and activate the conda environment
@@ -17,10 +19,10 @@ conda activate texttosql
 git clone https://github.com/krhash/text2sql-agent-rl.git
 cd text2sql-agent-rl
 
-# 3. Install the package in editable mode with dependencies
+# 3. Install the package in editable mode with all dependencies
 pip install -e .
 
-# 4. Authenticate with HuggingFace (Required to download Meta-Llama weights)
+# 4. Authenticate with HuggingFace (required for gated Llama 3.1 weights)
 huggingface-cli login
 ```
 
@@ -28,101 +30,142 @@ huggingface-cli login
 
 ## 2. Cluster Deployment (HPC)
 
-When deploying to a cluster (e.g., Northeastern Explorer), you need to synchronize your local project with the login node. Do not sync the active `models/` or `results/` directories to save bandwidth.
+Sync your local code to the cluster. Exclude `models/` and `results/` — those are generated on the cluster and are too large to transfer.
 
 ```bash
-# From your local machine, rsync to the cluster login node:
-# Exclude heavy directories that should remain strictly local or on cluster scratch
+# Preferred: rsync (supports --exclude)
 rsync -avz --exclude '.git' --exclude 'models/' --exclude 'results/' --exclude '__pycache__/' \
    /path/to/local/text2sql-agent-rl/ your_username@login.discovery.neu.edu:~/TEXT2SQL-AGENT-RL/
 ```
 
 ```bash
-# Alternative: Secure Copy (scp) if rsync is unavailable on your machine
-# Note: scp doesn't natively support ignoring folders. Be careful not to copy 'models/' or 'results/'!
+# Alternative: scp (does not support folder exclusions — be careful)
 scp -r /path/to/local/text2sql-agent-rl/ your_username@login.discovery.neu.edu:~/TEXT2SQL-AGENT-RL/
 ```
 
-On the cluster, the SLURM job scripts (`jobs/*.sh`) are pre-configured to automatically redirect `HF_HOME` and `TRANSFORMERS_CACHE` to your `/scratch` space. This prevents you from running out of disk space on your `/home` directory.
+All `jobs/*.sh` scripts automatically redirect `HF_HOME` and `TRANSFORMERS_CACHE` to `/scratch/$USER/hf_cache`, preventing home directory quota exhaustion from model downloads.
 
 ---
 
 ## 3. Pipeline Architecture
 
-The pipeline orchestrated by `scripts/pipeline.py` sequences 7 core stages. State is passed dynamically between stages via file outputs.
+The pipeline (`scripts/pipeline.py`) sequences 8 stages. State is passed between stages via output files on disk.
 
-- **`preprocess`**: Executes true SQL strings against local SQLite DBs and caches the exact returned row matrices to `results/preprocess/*.json`.
-- **`optimize_prompt`**: Runs an Actor-Critic loop on the training set. Rewrites the system prompt based on SQLite execution errors. Outputs `best_prompt.json`.
-- **`train_grpo`**: Fits a PEFT LoRA adapter against the Base Model using GRPO. Uses the true-SQL cache for rapid composite reward calculation. Outputs LoRA weights to `checkpoint-final`.
-- **`infer`**: Deterministic benchmark (`temperature=0.0`). Dynamically mounts LoRA weights if `training_done.flag` is detected in the results directory. Runs inference over the validation set. Outputs `predictions.csv`.
-- **`eval_string`**: Calculates strict syntactic accuracy against ground truth.
-- **`eval_exec`**: Runs generated SQL against SQLite to verify identical row retrieval.
-- **`report`**: Consolidates evaluation CSVs into a summary string.
+| Stage | Output file | Description |
+|---|---|---|
+| `preprocess` | `true_sql_cache_validation.json` | Execute ground-truth SQL, cache results |
+| `optimize_prompt` | `best_prompt.json` | Actor-Critic prompt rewriting loop |
+| `train_sft` | `sft_done.flag` | SFT LoRA fine-tuning on training set |
+| `train_grpo` | `training_done.flag` | GRPO RL fine-tuning on training set |
+| `infer` | `predictions.csv` | Deterministic inference on validation set |
+| `eval_string` | `eval_string.csv` | Syntactic exact match scoring |
+| `eval_exec` | `eval_exec.csv` | SQLite execution accuracy scoring |
+| `report` | `report.txt` | Difficulty-stratified summary table |
+
+The `infer` stage behavior is controlled by `--infer_model`:
+- `auto` — auto-detects from flag files (default, backward compatible)
+- `none` — plain frozen Llama, no adapter (baseline)
+- `grpo` — loads LoRA from `training_done.flag`
+- `sft` — loads LoRA from `sft_done.flag`
+- `<path>` — loads LoRA directly from a filesystem path
 
 ---
 
-## 4. Run State & Crash Recovery
+## 4. Checkpoint Layout & Crash Recovery
 
-The Pipeline Runner (`text2sql.pipeline.runner.ExperimentRunner`) includes native resumption logic:
+Both `train_sft` and `train_grpo` write structured checkpoint directories:
 
-1. **Stage Skipping:** If `results/<run_name>/eval_exec.csv` exists, the orchestrator skips the `eval_exec` stage automatically unless `--force` is passed.
-2. **Inference Resuming:** For `infer`, generation crashes are handled at the row level. If generating 500 samples fails at 200 due to CUDA OOM, the script reads `predictions.csv`, parses the completed `db_id` hashes, and cleanly resumes generation from sample 201.
-3. **Cache Sharing:** Adding `--cache_run preprocess` allows experimental runs to symlink or utilize the heavy caching data generated by the `preprocess` baseline, saving disk IO.
+```
+models/lora/<run_name>/
+  checkpoint-200/      <- periodic snapshot, auto-scanned for resume
+  checkpoint-400/      <- periodic snapshot, auto-scanned for resume
+  checkpoint-best/     <- best validation score, used by infer stage
+  checkpoint-final/    <- end-of-training state, for reference
+```
+
+**Stage skipping:** If a stage's output file exists, it is skipped automatically on resubmit unless `--force` is passed.
+
+**Inference resuming:** The `infer` stage appends to `predictions.csv` after each example. A crash at row 400/1000 resumes from row 401.
+
+**LoRA checkpoint resume:** On restart, the trainer scans for the highest `checkpoint-<N>` directory and resumes from the next step automatically. No flags needed.
+
+**Manual checkpoint override:**
+```bash
+# Resume GRPO from a specific checkpoint
+sbatch --export=ALL,GRPO_RESUME_FROM=models/lora/grpo_v1/checkpoint-400 jobs/03_grpo.sh
+
+# Resume SFT from a specific checkpoint
+sbatch --export=ALL,SFT_RESUME_FROM=models/lora/sft_v1/sft/checkpoint-400 jobs/04_sft.sh
+
+# Resume GRPO from best checkpoint (if training diverged after peak)
+sbatch --export=ALL,GRPO_RESUME_FROM=models/lora/grpo_v1/checkpoint-best jobs/03_grpo.sh
+```
 
 ---
 
 ## 5. Execution Reference
 
-### A. Quick Verifications (Interactive Node)
+### A. Interactive Verification (GPU node)
 
-To verify environment integrity and library initializations, run micro-tests inside an interactive GPU partition (e.g., `srun` with H100).
+Use these to verify the environment before submitting full jobs.
 
 ```bash
-# 1. Baseline Verification
+# Baseline
 python scripts/pipeline.py \
     --run baseline_test \
     --cache_run preprocess \
     --stages infer eval_string eval_exec report \
     --n_samples 50 --dtype bfloat16
 
-# 2. Prompt Optimizer Verification
+# Prompt Optimization
 python scripts/pipeline.py \
     --run fast_prompt_opt \
     --cache_run preprocess \
-    --stages optimize_prompt infer report \
+    --stages optimize_prompt infer eval_string eval_exec report \
     --n_opt_iterations 2 --opt_sample_size 10 --n_samples 50 --dtype bfloat16
 
-# 3. GRPO Verification
+# SFT
+python scripts/pipeline.py \
+    --run fast_sft \
+    --cache_run preprocess \
+    --stages train_sft infer eval_string eval_exec report \
+    --sft_n_steps 5 --batch_size 2 --checkpoint_every 2 \
+    --infer_model sft --dtype bfloat16
+
+# GRPO
 python scripts/pipeline.py \
     --run fast_grpo \
     --cache_run preprocess \
-    --stages train_grpo infer report \
-    --n_steps 10 --batch_size 2 --group_size 4 --n_samples 50 --dtype bfloat16
+    --stages train_grpo infer eval_string eval_exec report \
+    --n_steps 10 --batch_size 2 --group_size 4 \
+    --checkpoint_every 5 --n_samples 50 --dtype bfloat16
 ```
 
-### B. Production Training (SLURM Batch)
-
-Submit these sequentially to the scheduler for official runs.
+### B. Production Training (SLURM)
 
 ```bash
-sbatch jobs/00_preprocess.sh     # Cache Ground Truth (Global Run)
-sbatch jobs/01_baseline.sh       # Baseline Generation
-sbatch jobs/02_prompt_opt.sh     # Train Prompt
-sbatch jobs/03_grpo.sh           # Train LoRA RLHF
-```
+sbatch jobs/00_preprocess.sh     # Run once globally
+sbatch jobs/01_baseline.sh       # Baseline
+sbatch jobs/02_prompt_opt.sh     # Prompt optimization
+sbatch jobs/04_sft.sh            # SFT fine-tuning
+sbatch jobs/03_grpo.sh           # GRPO RL fine-tuning
 
-To run all stages automatically (with node scheduling dependencies):
+# Override GPU type at submission for any job
+sbatch --gres=gpu:h100:1 jobs/03_grpo.sh
+sbatch --gres=gpu:h100:1 jobs/04_sft.sh
 
-```bash
+# Or run all stages sequentially
 sbatch jobs/05_run_everything.sh
 ```
 
-### C. Final Reporting
+### C. Comparison Report
 
-After experiments finish, consolidate the CSV files into a unified output matrix.
+After all experiments finish, generate the cross-run comparison matrix:
 
 ```bash
 python scripts/compare.py \
-    --runs baseline_v1 prompt_opt_v1 grpo_v1 \
+    --runs baseline_v1 prompt_opt_v1 sft_v1 grpo_v1 \
     --output results/final_comparison.txt
 ```
+
+For full command details and resume patterns, see [`docs/HPC_TRAINING_COMMANDS.md`](HPC_TRAINING_COMMANDS.md).

@@ -100,11 +100,36 @@ class ExperimentRunner:
     def _run_stage(self, stage: str, force: bool):
         output = self._stage_outputs()[stage]
         if output.exists() and not force:
-            self.log.info(f"[SKIP] {stage} — output exists: {output}")
-            return
+            # For infer: check row count vs expected val-set size.
+            # A partial predictions.csv must NOT be skipped — inference
+            # must resume from the last completed row.
+            if stage == "infer":
+                import csv
+                c = self.config
+                try:
+                    from text2sql.data.dataset import SpiderDataset
+                    expected = len(SpiderDataset(c.val_path).load(n=c.n_samples))
+                    with open(output, newline="") as f:
+                        completed = max(0, sum(1 for _ in csv.reader(f)) - 1)  # subtract header
+                    if completed < expected:
+                        self.log.info(
+                            f"[RESUME] infer — predictions.csv is incomplete "
+                            f"({completed}/{expected}). Continuing from row {completed + 1}."
+                        )
+                        # fall through to run the stage
+                    else:
+                        self.log.info(f"[SKIP] infer — predictions complete ({completed}/{expected})")
+                        return
+                except Exception:
+                    self.log.info(f"[SKIP] {stage} — output exists: {output}")
+                    return
+            else:
+                self.log.info(f"[SKIP] {stage} — output exists: {output}")
+                return
         self.log.info(f"\n{'='*60}\n  STAGE: {stage.upper()}\n{'='*60}")
         self._handlers[stage]()
         self.log.info(f"[DONE] {stage}")
+
 
     # ── Stage: preprocess ─────────────────────────────────────────────────────
 
@@ -188,19 +213,37 @@ class ExperimentRunner:
         RewardCls = CompositeReward if c.reward_fn == "composite" else BinaryReward
         reward_fn = RewardCls(db_root=c.db_root, true_sql_cache_path=cache_path)
 
-        lora_output = Path("models/lora") / c.run_name
+        # Anchor lora_output to an absolute path so it is stable across sbatch submissions
+        lora_output = (Path(c.results_dir) / ".." / "models" / "lora" / c.run_name).resolve()
+
+        # Allow explicit resume from a specific checkpoint
+        if c.grpo_resume_from:
+            resume_path = Path(c.grpo_resume_from)
+            if not resume_path.exists():
+                raise FileNotFoundError(
+                    f"--grpo_resume_from path not found: {resume_path}"
+                )
+            # Copy the named checkpoint into output_dir as checkpoint-0 sentinel
+            # so the scanner picks it up and restores weights, then continues.
+            import shutil
+            sentinel = lora_output / "checkpoint-0"
+            if not sentinel.exists():
+                self.log.info(f"Seeding resume from: {resume_path} -> {sentinel}")
+                shutil.copytree(str(resume_path), str(sentinel))
+
         grpo_gen = GRPOOptimizer(
-            reward_fn    = reward_fn,
-            lora_config  = default_lora_config(r=c.lora_r, lora_alpha=c.lora_alpha),
-            group_size   = c.group_size,
-            n_steps      = c.n_steps,
-            kl_coef      = c.kl_coef,
-            batch_size   = c.batch_size,
-            learning_rate= c.learning_rate,
-            output_dir   = lora_output,
-            log_path     = self.run_dir / "training_log.jsonl",
-            val_evaluator= StringMatchEvaluator(),
-            val_data     = val_data,
+            reward_fn        = reward_fn,
+            lora_config      = default_lora_config(r=c.lora_r, lora_alpha=c.lora_alpha),
+            group_size       = c.group_size,
+            n_steps          = c.n_steps,
+            kl_coef          = c.kl_coef,
+            batch_size       = c.batch_size,
+            learning_rate    = c.learning_rate,
+            checkpoint_every = c.checkpoint_every,
+            output_dir       = lora_output,
+            log_path         = self.run_dir / "training_log.jsonl",
+            val_evaluator    = StringMatchEvaluator(),
+            val_data         = val_data,
         ).optimize(gen, train_data, val_data, self.run_dir)
 
         # Write flag pointing to best checkpoint so infer knows where to load
@@ -232,7 +275,22 @@ class ExperimentRunner:
 
         gen = LLMGenerator(c.run_name, engine, prompt)
 
-        lora_output = Path("models/lora") / c.run_name / "sft"
+        # Anchor lora_output to an absolute path so it is stable across sbatch submissions
+        lora_output = (Path(c.results_dir) / ".." / "models" / "lora" / c.run_name / "sft").resolve()
+
+        # Allow explicit resume from a specific checkpoint
+        if c.sft_resume_from:
+            resume_path = Path(c.sft_resume_from)
+            if not resume_path.exists():
+                raise FileNotFoundError(
+                    f"--sft_resume_from path not found: {resume_path}"
+                )
+            import shutil
+            sentinel = lora_output / "checkpoint-0"
+            if not sentinel.exists():
+                self.log.info(f"Seeding SFT resume from: {resume_path} -> {sentinel}")
+                shutil.copytree(str(resume_path), str(sentinel))
+
         sft_gen = SFTOptimizer(
             lora_config      = default_lora_config(r=c.lora_r, lora_alpha=c.lora_alpha),
             n_steps          = c.sft_n_steps,

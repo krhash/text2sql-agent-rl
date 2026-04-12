@@ -1,11 +1,11 @@
 #!/bin/bash
 #SBATCH --job-name=baseline_v1
-#SBATCH --partition=gpu
+#SBATCH --partition=sharing
 #SBATCH --nodes=1
-#SBATCH --gres=gpu:a100:1          # A100 40GB minimum required
-#SBATCH --mem=64GB                 # CPU RAM
+#SBATCH --gres=gpu:l40s:1
+#SBATCH --mem=48GB
 #SBATCH --cpus-per-task=4
-#SBATCH --time=04:00:00
+#SBATCH --time=00:59:00
 #SBATCH --output=/home/%u/TEXT2SQL-AGENT-RL/results/baseline_v1/slurm_%j.out
 #SBATCH --error=/home/%u/TEXT2SQL-AGENT-RL/results/baseline_v1/slurm_%j.err
 
@@ -28,10 +28,12 @@ echo "Node        : $(hostname)"
 echo "GPU         : $(nvidia-smi --query-gpu=name --format=csv,noheader)"
 echo "Task        : Baseline Llama 3.1 8B Inference"
 
-# Requires the preprocess cache to have been run
+cd $PROJECT
 python $PROJECT/scripts/pipeline.py \
     --run baseline_v1 \
     --cache_run preprocess \
-    --stages infer eval_string eval_exec report
+    --stages infer eval_string eval_exec report \
+    --infer_model none \
+    --dtype float16
 
 echo "Baseline experiment complete."
